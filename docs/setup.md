@@ -178,7 +178,7 @@
   ✔ Do you want to edit the schema now? (Y/n) · <b><font color="lightgreen">yes</font></b>
   ✅ Successfully added resource blogcomments locally
   </pre>
-- schemaが上書きされるので、戻す
+- schemaが上書きされるので戻します。
   ```sh
   $ git restore amplify/backend/api/blogcomments/schema.graphql
   ```
@@ -378,7 +378,18 @@
   ```sh
   $ amplify push
   ```
-- push時のcodegenにより、sortDirectionが削除されるので戻しておく
+  <pre>
+  ✔ Are you sure you want to continue? (Y/n) · <b><font color="lightgreen">yes</font></b>
+
+  ? Do you want to generate code for your newly created GraphQL API <b><font color="lightgreen">Yes</font></b>
+  ? Choose the code generation language target <b><font color="lightgreen">typescript</font></b>
+  ? Enter the file name pattern of graphql queries, mutations and subscriptions <b><font color="lightgreen">src/graphql/**/*.ts</font></b>
+  ? Do you want to generate/update all possible GraphQL operations - queries, mutations and subscriptions <b><font color="lightgreen">Yes</font></b>
+  ? Enter maximum statement depth [increase from default if your schema is deeply nested] <b><font color="lightgreen">8</font></b>
+  ? Enter the file name for the generated code <b><font color="lightgreen">src/API.ts</font></b>
+  </pre>
+
+- push時のcodegenにより、sortDirectionが削除されるので戻します。
   ```sh
   $ git restore src/graphql/queries.ts
   ```
@@ -390,9 +401,9 @@
   https://blogcommentsXXXXXXXX-XXXXXXXX-prod.auth.ap-northeast-1.amazoncognito.com/oauth2/idpresponse
   ```
 - Google/Facebookなど各サービスのリダイレクトURIに追加して許可します。
-  - GoogleのOAuth設定箇所
+  - GoogleのOAuth設定箇所  
     ![GoogleのOAuth設定箇所](google_oauth.png "GoogleのOAuth設定箇所")
-  - FacebookのOAuth設定箇所
+  - FacebookのOAuth設定箇所  
     ![FacebookのOAuth設定箇所](facebook_oauth.png "FacebookのOAuth設定箇所")
 - Hosted UIのリダイレクト先に追加します。
   ```sh
@@ -415,6 +426,7 @@
 
 - エラーがないことを確認したい場合、手元でbundleをビルドしたい場合は、以下のコマンドを実行します。
   ```sh
+  $ npm install
   $ npm run build
   ```
 - 以下の2つのファイルが生成されていることを確認します。
@@ -425,7 +437,10 @@
   - hugoに直接持たせてもかまいません。
 
 ## 手順8. デプロイ
-
+- 手順7.をスキップしている場合はビルド環境を整えておきます。
+  ```sh
+  $ npm install
+  ```
 - hostingを自動化して、main.min.jsをCDNに配置する場合
   ```sh
   $ amplify hosting add
@@ -434,7 +449,6 @@
   ✔ Select the plugin module to execute · <b><font color="lightgreen">Hosting with Amplify Console (Managed hosting with custom domains, Continuous deployment)</font></b>
   ? Choose a type <b><font color="lightgreen">Manual deployment</font></b>
   </pre>
-
   ```
   Hosting with Amplify Console (Managed hosting with custom domains, Continuous deployment)
   Amazon CloudFront and S3
@@ -501,13 +515,17 @@
     https://prod.xxxxxxxxxxxxx.amplifyapp.com/static/js/main.aaaaaaaa.js
     https://prod.xxxxxxxxxxxxx.amplifyapp.com/static/css/main.bbbbbbbb.css
     ```
+  - OAuth連携の動作確認をする場合は、新しくデプロイされた先を手順6.同様に追加します。
+     ```
+     https://prod.xxxxxxxxxxxxx.amplifyapp.com
+     ```
 
 ## 手順9. ブログ側の設定
 
 - デプロイ先の成果物main.\*.js/main.\*.cssをHTMLで読み込むことで、CDN経由で使うことができます。
 - [hugoへの組み込み例](hugo.md)をご参照ください。
 
-## 解体手順
+## 環境解体手順
 
 - AWSアカウント上のリソースやローカルのファイルを含めてamplifyで構築したリソースすべて削除されます。ご注意ください。
   ```sh
