@@ -1,0 +1,101 @@
+# 全ユーザーは読み取りのみ可能
+# ログインユーザーはコメント可能（CreateComment/UpdateVotes）
+# 投稿者は編集、削除可能（CreateComment/UpdateComment/DeleteComment）
+# ログインユーザーはVoting可能（UpdateVotes/DeleteVotes）
+# Slug単位で紐付くコメントを一括取得（commentsBySlugAndUpdateAt）
+# 更新日時順に自動ソート（commentsBySlugAndUpdateAt）
+
+type Comment
+  @model(queries: { get: null, list: null }, mutations: null, subscriptions: null)
+  @auth(rules: [
+    { allow: owner, provider: userPools, operations: [read, create, update, delete] }
+    { allow: private, provider: userPools, operations: [read] }
+    { allow: public, provider: iam, operations: [read]},
+  ]) {
+  id: ID!
+  slug: String! @index(name: "commentsBySlugAndUpdatedAt", queryField: "commentsBySlugAndUpdatedAt", sortKeyFields: ["updatedAt"])
+  displayName: String!
+  userId: String
+  content: String!
+  siteurl: String
+  commentVotesId: ID!
+  votes: Votes! @hasOne
+  replyTo: ID @index(name: "byReplyToAndUpdatedAt", sortKeyFields: ["updatedAt"])
+  replies: [Comment] @hasMany(indexName: "byReplyToAndUpdatedAt", fields: ["id"])
+  createdAt: String!
+  updatedAt: String!
+  deletedAt: String
+}
+
+# Comment経由で操作される想定
+type Votes
+  @model(queries: null, mutations: null, subscriptions: null)
+  @auth(rules: [
+    { allow: owner, provider: userPools, operations: [read, create, delete] }
+    { allow: private, provider: userPools, operations: [read, update] }
+    { allow: public, provider: iam, operations: [read] }
+  ]) {
+  id: ID!
+  upvoters: [String]
+  downvoters: [String]
+  owner: String
+}
+
+# 新規投稿/返信投稿
+input CreateCommentInput {
+  slug: String!
+  displayName: String!
+  content: String!
+  siteurl: String
+  replyTo: ID
+  commentVotesId: ID
+}
+
+# 投稿編集
+input UpdateCommentInput {
+  id: ID!
+  displayName: String
+  content: String
+  siteurl: String
+}
+
+# 投稿削除
+input DeleteCommentInput {
+  id: ID!
+}
+
+# Voting
+input UpdateVotesInput {
+  id: ID!
+  upvoter: String
+  downvoter: String
+}
+
+# Voting
+input DeleteVotesInput {
+  id: ID!
+}
+
+type Mutation @aws_cognito_user_pools {
+  # 投稿の新規作成/返信
+  createComment(input: CreateCommentInput!): Comment @function(name: "CreateComment-${env}")
+  # 投稿の編集
+  updateComment(input: UpdateCommentInput!): Comment @function(name: "UpdateComment-${env}")
+  # 投稿の削除
+  deleteComment(input: DeleteCommentInput!): Comment @function(name: "DeleteComment-${env}")
+  # Voting
+  updateVotes(input: UpdateVotesInput!): Votes @function(name: "UpdateVotes-${env}")
+  # Voting
+  deleteVotes(input: DeleteVotesInput!): Votes @function(name: "DeleteVotes-${env}")
+}
+
+# Slug単位でsubscribeするため個別に定義
+type Subscription @aws_cognito_user_pools {
+  # 新規投稿をsubscribeできる
+  onCreateComment(slug: String!): Comment @aws_subscribe(mutations: ["createComment"])
+  # 投稿の編集をsubscribeできる
+  onUpdateComment(slug: String!): Comment @aws_subscribe(mutations: ["updateComment"])
+  # 投稿の削除をsubscribeできる
+  onDeleteComment(slug: String!): Comment @aws_subscribe(mutations: ["deleteComment"])
+  # Votingのリアルタイム更新は今のところ不要
+}
