@@ -57,3 +57,6 @@
 
 ## 細かい仕様
 - [細かい仕様](docs/hint.md)
+
+## 代替手段
+- [代替手段](docs/alternative.md)
