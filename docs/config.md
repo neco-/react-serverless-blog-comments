@@ -33,17 +33,17 @@ export const ENABLED_OAUTH_GITHUB = false
 - ボタンを表示しても、バックエンド側でそのプロバイダを有効にしていなければログインはできません。
   プロバイダの追加手順は [導入手順の手順5](setup.md#手順5-ソーシャルログインを足す任意) を参照してください。
 
-## クレジット表記
+## サイト固有の表示（クレジット表記・サイト名）
 
-コメント欄の見出しの右に、任意のリンクを 1 つ出せます。**両方が埋まっているときだけ**表示され、
-既定では何も出ません。
+サイトの名前や URL は `src/config.ts` に書かず、ビルド時の環境変数で差し込みます。
+どれも未設定なら何も出ません（サイト固有の文言が入らない一般的な表示になります）。
 
-値はビルド時の環境変数で差し込みます。
-
-| 環境変数 | 値 |
-| --- | --- |
-| `VITE_POWERED_BY_LABEL` | 表示する文言（例: `Powered by example`） |
-| `VITE_POWERED_BY_URL` | リンク先（例: `https://example.com`） |
+| 環境変数 | 値 | 使われる場所 |
+| --- | --- | --- |
+| `VITE_POWERED_BY_LABEL` | クレジットの文言（例: `Powered by example`） | コメント欄の見出しの右。**URL とそろって初めて**表示 |
+| `VITE_POWERED_BY_URL` | クレジットのリンク先（例: `https://example.com`） | 同上 |
+| `VITE_SITE_NAME` | サイト名（例: `example`） | 自前ログインのダイアログの見出し「Sign in example」と、アカウント作成の文言 |
+| `VITE_SIGNUP_URL` | アカウント作成ページ（例: `https://example.com/signup`） | 自前ログインのダイアログの「You can create … account.」リンク。未設定ならリンクなし |
 
 - ローカルなら shell の環境変数、Amplify Hosting ならコンソールの「環境変数」で
   ブランチごとに設定します。`.env.local` に書く方法もあります（`.gitignore` 済み）。
@@ -51,7 +51,8 @@ export const ENABLED_OAUTH_GITHUB = false
   自分のリポジトリだけで使うなら、`src/config.ts` の `?? ""` の側を書き換えても構いません。
 
 ```sh
-VITE_POWERED_BY_LABEL="Powered by example" VITE_POWERED_BY_URL="https://example.com" npm run build
+VITE_POWERED_BY_LABEL="Powered by example" VITE_POWERED_BY_URL="https://example.com" \
+VITE_SITE_NAME="example" VITE_SIGNUP_URL="https://example.com/signup" npm run build
 ```
 
 ## 自前ログインのボタン画像

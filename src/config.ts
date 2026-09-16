@@ -6,6 +6,12 @@
 export const POWERED_BY_LABEL = import.meta.env.VITE_POWERED_BY_LABEL ?? ""
 export const POWERED_BY_URL = import.meta.env.VITE_POWERED_BY_URL ?? ""
 
+// 自前ログインのダイアログに出すサイト名と、アカウント作成ページへのリンク (docs/config.md 参照)
+// SITE_NAME が空なら見出しは "Sign in" だけ、SIGNUP_URL が空ならアカウント作成のリンクは出しません。
+//   VITE_SITE_NAME / VITE_SIGNUP_URL
+export const SITE_NAME = import.meta.env.VITE_SITE_NAME ?? ""
+export const SIGNUP_URL = import.meta.env.VITE_SIGNUP_URL ?? ""
+
 // ログインボタンの表示/非表示 (docs/config.md 参照)
 export const ENABLED_OAUTH_ORIGINAL = true
 export const ENABLED_OAUTH_GOOGLE = true

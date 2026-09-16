@@ -62,7 +62,7 @@ export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: num
       setIsOpenReplyEditor(prev => !prev)
       setIsEditing(false)
     } else {
-      // sign in with scrum-cjgg
+      // 未ログインならログインダイアログを開く
       setIsOpenReplyEditor(false)
       setIsOpenDialog(true)
     }

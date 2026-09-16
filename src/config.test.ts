@@ -27,6 +27,18 @@ describe('クレジット表記の設定', () => {
     expect(config.POWERED_BY_URL).toBe('https://example.com')
   })
 
+  it('サイト名とアカウント作成 URL も環境変数で差し込め、無ければ空', async () => {
+    vi.stubEnv('VITE_SITE_NAME', undefined)
+    vi.stubEnv('VITE_SIGNUP_URL', undefined)
+    expect((await loadConfig()).SITE_NAME).toBe('')
+    expect((await loadConfig()).SIGNUP_URL).toBe('')
+    vi.stubEnv('VITE_SITE_NAME', 'example')
+    vi.stubEnv('VITE_SIGNUP_URL', 'https://example.com/signup')
+    const config = await loadConfig()
+    expect(config.SITE_NAME).toBe('example')
+    expect(config.SIGNUP_URL).toBe('https://example.com/signup')
+  })
+
   it('片方だけの指定でも、もう片方は空のまま', async () => {
     vi.stubEnv('VITE_POWERED_BY_LABEL', 'Powered by example')
     vi.stubEnv('VITE_POWERED_BY_URL', undefined)

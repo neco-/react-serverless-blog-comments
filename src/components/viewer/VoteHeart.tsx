@@ -78,7 +78,7 @@ export const VoteHeart = ({votes}:{votes:VotesProps}) => {
         sendUpvote()
       }
     } else {
-      // sign in with scrum-cjgg
+      // 未ログインならログインダイアログを開く
       setIsOpenDialog(true)
     }
   }

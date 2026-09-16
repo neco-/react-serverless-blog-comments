@@ -12,6 +12,7 @@ import {
 
 import { useAuth } from '../../hooks/useAuth'
 import { getWidgetRoot } from '../../lib/widgetRoot'
+import { SITE_NAME, SIGNUP_URL } from '../../config'
 
 export const SignInModal = () => {
   const { isAuthenticated, signIn, isOpenDialog, setIsOpenDialog } = useAuth()
@@ -43,7 +44,7 @@ export const SignInModal = () => {
     >
       <Modal.Header closeButton>
         <Modal.Title>
-          Sign in scrum-cjgg
+          {SITE_NAME ? `Sign in ${SITE_NAME}` : "Sign in"}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
@@ -53,7 +54,7 @@ export const SignInModal = () => {
           id="blogcomment-auth-fc-username"
           placeholder="Username"
           aria-label="Username"
-          aria-describedby="Enter your username for scrum-cjgg account."
+          aria-describedby={SITE_NAME ? `Enter your username for ${SITE_NAME} account.` : "Enter your username."}
           onChange={handleChangeUsername}
         />
       </InputGroup>
@@ -70,7 +71,13 @@ export const SignInModal = () => {
         <Button onClick={() => {setIsVisible((prev) => !prev)}}>{isVisible ? <EyeSlashFill /> : <EyeFill />}</Button>
       </InputGroup>
       <Button className="mt-1" onClick={() => {handleSignIn()}}>Sign in</Button>
-      <div style={{display:"flex", justifyContent:"right", fontSize:"x-small"}}><a href="https://scrum-cjgg.com" target="_blank" rel="noopener noreferrer">You can create scrum-cjgg account.</a></div>
+      {SIGNUP_URL && (
+        <div style={{display:"flex", justifyContent:"right", fontSize:"x-small"}}>
+          <a href={SIGNUP_URL} target="_blank" rel="noopener noreferrer">
+            {SITE_NAME ? `You can create ${SITE_NAME} account.` : "You can create an account."}
+          </a>
+        </div>
+      )}
       </Modal.Body>
     </Modal>
   )
