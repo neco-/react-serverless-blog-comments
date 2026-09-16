@@ -35,7 +35,7 @@ npx ampx sandbox
 | --- | --- |
 | `amplify/auth/resource.ts` | Cognito ユーザープール / ID プール |
 | `amplify/data/resource.ts` | AppSync API、DynamoDB の `Comment` / `Votes` テーブル |
-| `amplify/functions/*/resource.ts` | Lambda 5 本（投稿 / 編集 / 削除 / 投票 / 投票取り消し） |
+| `amplify/functions/*/resource.ts` | Lambda 6 本（投稿 / 編集 / 削除 / 投票 / 投票取り消し / 票数取得） |
 
 完了すると `amplify_outputs.json` が生成されます。フロントエンドはこれを読んで接続先を決めます
 （`.gitignore` 済み。リポジトリには入れません）。
@@ -132,7 +132,7 @@ defineAuth({
 - 各プロバイダ側（Google Cloud Console など）で OAuth クライアントを作り、
   Cognito の Hosted UI ドメインをリダイレクト先に登録する作業も必要です。
 - どのボタンを画面に出すかは `src/config.ts` で切り替えます（[config設定](config.md)）。
-- 本番運用には各サービスの審査が要ります。手間は Google < Facebook < LINE の順に大きい印象です。
+- 本番運用には各サービスの審査が要ります。手間は Google < LINE の順に大きい印象です。
 
 ## 手順6. 既存の Cognito を参照する（任意）
 

@@ -19,7 +19,7 @@ const backend = defineBackend({
   votesByIds,
 })
 
-// Lambda は DynamoDB を直接読み書きする（Gen1 と同じ）。テーブル名は Gen1 と同じ環境変数名で渡す。
+// Lambda は AppSync を介さず DynamoDB を直接読み書きする。テーブル名は環境変数で渡す。
 const commentTable = backend.data.resources.tables['Comment']
 const votesTable = backend.data.resources.tables['Votes']
 

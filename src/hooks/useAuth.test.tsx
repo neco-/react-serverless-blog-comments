@@ -112,10 +112,9 @@ describe('useAuth', () => {
     window.history.pushState({}, '', '/posts/abc')
     const { result, authClient } = setup()
     await act(async () => { await result.current.signInWithGoogle() })
-    await act(async () => { await result.current.signInWithFacebook() })
     await act(async () => { await result.current.signInWithLine() })
     expect(authClient.calls.filter((c) => c.method === 'signInWithProvider').map((c) => c.args)).toEqual([
-      ['Google', '/posts/abc'], ['Facebook', '/posts/abc'], ['LINE', '/posts/abc'],
+      ['Google', '/posts/abc'], ['LINE', '/posts/abc'],
     ])
   })
   it('アンマウントで listener が解除される', async () => {

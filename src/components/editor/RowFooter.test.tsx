@@ -21,11 +21,10 @@ beforeEach(() => {
 })
 
 describe('RowFooter（未ログイン）', () => {
-  it('config で有効なログイン手段のボタンだけ出す（Original/Google/LINE あり、Facebook と GitHub なし）', () => {
+  it('config で有効なログイン手段のボタンだけ出す（Original/Google/LINE あり、GitHub なし）', () => {
     renderWithClients(<RowFooter />)
     expect(screen.getByLabelText('Google SignIn')).toBeInTheDocument()
     expect(screen.getByAltText('Sign in with LINE')).toBeInTheDocument()
-    expect(screen.queryByLabelText('Facebook SignIn')).toBeNull()
     expect(screen.queryByLabelText('Github SignIn')).toBeNull()
     expect(screen.queryByText('Send')).toBeNull()
   })

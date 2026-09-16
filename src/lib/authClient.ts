@@ -2,7 +2,7 @@
 // フックやコンポーネントは AuthClient だけを見る。
 
 export type AuthUser = { username: string; displayName: string }
-export type OAuthProvider = 'Google' | 'Facebook' | 'LINE'
+export type OAuthProvider = 'Google' | 'LINE'
 export type AuthEvent =
   | { type: 'signedIn'; user: AuthUser }
   | { type: 'signInFailure'; error: unknown }

@@ -6,7 +6,7 @@ import { updateVotes } from '../functions/UpdateVotes/resource'
 import { deleteVotes } from '../functions/DeleteVotes/resource'
 import { votesByIds } from '../functions/VotesByIds/resource'
 
-// Gen1 の schema.graphql と同じ GraphQL API を生成する。
+// コメントと投票の GraphQL API を定義する。
 // - 全員が読み取り可能（未ログインは IAM（ID プールの unauth ロール）、ログイン済みはユーザープール）
 // - 書き込みは Lambda 経由のカスタム mutation のみ（ログインユーザー）。Lambda が userId を検査する
 // - 自動生成の CRUD mutation / subscription / get / list は無効化し、インデックスのクエリだけ残す
@@ -47,8 +47,8 @@ const schema = a.schema({
     .disableOperations(['mutations', 'subscriptions', 'get', 'list'])
     .authorization((allow) => [allow.guest().to(['read']), allow.authenticated().to(['read'])]),
 
-  // カスタム mutation の入力型。customType を引数に使うと Gen2 は `<型名>Input` という input 型を生成するので、
-  // Gen1 と同じ `CreateCommentInput` などになるよう型名は `CreateComment` などにしている。
+  // カスタム mutation の入力型。customType を引数に使うと `<型名>Input` という input 型が生成されるので、
+  // クライアント側が `CreateCommentInput` を受け取れるよう型名は `CreateComment` などにしている。
   // 新規投稿 / 返信投稿
   CreateComment: a.customType({
     slug: a.string().required(),

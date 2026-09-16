@@ -46,10 +46,7 @@ node -v   # v22 以上であること
 
 ## Amplify CLI について
 
-Gen2 では CLI をグローバルに入れる必要はありません。リポジトリの devDependencies に
+CLI をグローバルに入れる必要はありません。リポジトリの devDependencies に
 `@aws-amplify/backend-cli` が入っており、`npx ampx ...` で実行します。
-
-> 旧 Gen1 の `@aws-amplify/cli`（`amplify` コマンド）は使いません。
-> 入っていても構いませんが、このリポジトリの手順では使用しません。
 
 次は [導入手順](setup.md) へ。

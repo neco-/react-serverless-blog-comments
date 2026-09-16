@@ -61,6 +61,7 @@
 | Lambda の定義（ランタイム等） | `amplify/functions/*/resource.ts` |
 | スタックの組み立てと権限付与 | `amplify/backend.ts` |
 | ウィジェットのエントリ | `src/index.tsx` |
+| 表示の設定（ログインボタン等） | `src/config.ts` |
 | Amplify SDK の隔離層 | `src/lib/authClient.ts`, `src/lib/apiClient.ts` |
 | 見た目（すべて `#blogcomments` 配下） | `src/styles/blogcomments.css` |
 

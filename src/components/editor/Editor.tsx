@@ -19,7 +19,7 @@ export const Editor = ({
   }) => {
   return (
     <>
-    <RowHeader isReply={!!inReplyTo} isEditing={!!editingCommentId} isShownSign={true} />
+    <RowHeader isReply={!!inReplyTo} isEditing={!!editingCommentId} />
     <RowInputName />
     <RowInputSiteURL />
     <RowEditor inReplyTo={inReplyTo} editingCommentId={editingCommentId} editingComment={editingComment} />

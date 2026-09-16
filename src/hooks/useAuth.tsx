@@ -20,7 +20,6 @@ interface IInternalAuth {
   signOut: () => void
   isOpenDialog: boolean
   setIsOpenDialog: React.Dispatch<React.SetStateAction<boolean>>
-  signInWithFacebook: () => void
   signInWithGoogle: () => void
   signInWithLine: () => void
 }
@@ -157,24 +156,6 @@ const InternalAuth = (): IInternalAuth => {
     })
   }
 
-  // Sign in with federated OIDC for Facebook
-  const signInWithFacebook = async () => {
-    setSignInErrorMessage("")
-    setAuthState({
-      username: "",
-      displayName: "",
-      isError: false,
-      isAuthenticated: false,
-      isLoading: true,
-    })
-    const path: string = window.location.pathname
-    try {
-      await authClient.signInWithProvider('Facebook', path)
-    } catch (error) {
-      handleSignInWithProviderFailure('Facebook', error)
-    }
-  }
-
   // Sign in with federated OIDC for Google
   const signInWithGoogle = async () => {
     setSignInErrorMessage("")
@@ -224,7 +205,6 @@ const InternalAuth = (): IInternalAuth => {
     signOut,
     isOpenDialog,
     setIsOpenDialog,
-    signInWithFacebook,
     signInWithGoogle,
     signInWithLine,
   }

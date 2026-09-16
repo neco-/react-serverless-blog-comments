@@ -9,6 +9,22 @@
 
 - [スクラム鳥獣戯画](https://www.scrum-cjgg.com) のブログページに設置されています。
 
+## 画面
+
+投稿フォーム。名前と Web(任意) を入れ、本文は Markdown エディタで書きます。
+右下の「comment with」からログインすると Send ボタンが出ます。
+
+![コメント投稿フォームのスクリーンショット](docs/screenshot.png "コメント投稿フォーム")
+
+投稿されたコメント。Markdown はサニタイズしたうえで描画し、返信は 3 階層までネストします。
+名前の先頭一文字がアバターになります。
+
+![コメント表示のスクリーンショット](docs/comment.png "コメント表示")
+
+OS の設定に追従してダークでも表示します（強制もできます。[ライトとダーク](docs/hugo.md#ライトとダーク)）。
+
+![ダーク表示のスクリーンショット](docs/dark.png "ダーク表示")
+
 ## 想定ユーザー層
 
 - コメント機能のためにサーバーを持ちたくない
@@ -48,7 +64,7 @@
 | [事前準備](docs/prepare.md) | AWS アカウントと CLI の用意 |
 | [導入手順](docs/setup.md) | バックエンド構築からデプロイまで |
 | [hugoへの組み込み例](docs/hugo.md) | ブログ側への設置 |
-| [config設定](docs/config.md) | ログインボタンの表示切り替え |
+| [config設定](docs/config.md) | ログインボタンの表示切り替えなど |
 | [アーキテクチャ](docs/architecture.md) | 構成と設計の意図 |
 | [細かい仕様](docs/hint.md) | 仕様・既知の制限・変更のヒント |
 | [代替手段](docs/alternative.md) | 他のコメントシステムとの比較 |
@@ -77,6 +93,7 @@ Node.js 22 以上が必要です。
 | `npm run build` | `tsc` で型検査してから `build/` へ本番ビルド |
 | `npm run preview` | 本番ビルドをローカルで配信して動作確認 |
 | `npm test` | フロント（Vitest + jsdom）と Lambda（Vitest + node）のテスト |
+| `npm run test:watch` | 同じテストを監視モードで回す |
 
 ビルドは Hugo 側から読み込みやすいよう、ハッシュなしの固定ファイル名で出力します
 （`build/static/js/main.min.js` / `build/static/css/main.min.css`）。
@@ -98,6 +115,8 @@ URL が変わらないので、配信側で `Cache-Control` を設定してく�
 - `npx tsx scripts/print-schema.ts` で、デプロイせずに生成される GraphQL スキーマを確認できます。
 - `node scripts/guest-query.mjs '<query>'` で、未ログイン（ID プールのゲスト）として API を叩けます。
   AWS の認証情報は不要で、ゲスト読み取りの権限確認に使います。
+- `node scripts/copy-table.mjs <コピー元テーブル> <コピー先テーブル> [--dry-run]` で DynamoDB の
+  テーブルを全件コピーします（小さなテーブル向け）。環境を作り直したときの移行用で、通常の運用では使いません。
 - バックエンドやランタイムを更新したあとは [docs/verification-checklist.md](docs/verification-checklist.md)
   を検証環境で通してください。
 
@@ -106,6 +125,14 @@ URL が変わらないので、配信側で `Cache-Control` を設定してく�
 コメント本文は他人が書いたものをそのまま描画する場所です。`rehype-sanitize` を外すと
 フィッシングやクリックジャッキングに使える HTML が通ります。Markdown の描画まわりを触ったら
 `src/components/viewer/Comment.sanitize.test.tsx` が通ることを確認してください。
+
+## 貢献
+
+Issue と Pull Request を歓迎します。進め方は [CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
+
+## 脆弱性の報告
+
+公開の Issue ではなく [SECURITY.md](SECURITY.md) の手順で連絡してください。
 
 ## ライセンス
 

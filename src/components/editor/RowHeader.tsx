@@ -3,12 +3,12 @@ import React from "react"
 import Row from "react-bootstrap/Row"
 import Col from "react-bootstrap/Col"
 
+import { POWERED_BY_LABEL, POWERED_BY_URL } from "../../config"
+
 export const RowHeader = ({
-    isShownSign = true,
     isEditing = false,
     isReply = false,
   } : {
-    isShownSign: boolean,
     isEditing?: boolean,
     isReply: boolean
   }) => {
@@ -21,8 +21,8 @@ export const RowHeader = ({
         </div>
       </Col>
       <Col>
-        {isShownSign
-          ? <div style={{display:"flex", justifyContent:"right", fontSize:"x-small"}}><a href="https://scrum-cjgg.com" target="_blank" rel="noopener noreferrer">Powered by scrum-cjgg</a></div>
+        {POWERED_BY_LABEL && POWERED_BY_URL
+          ? <div style={{display:"flex", justifyContent:"right", fontSize:"x-small"}}><a href={POWERED_BY_URL} target="_blank" rel="noopener noreferrer">{POWERED_BY_LABEL}</a></div>
           : null
         }
       </Col>

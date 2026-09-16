@@ -11,14 +11,15 @@
       - `Comment`
       - `Votes`
     - AppSync（GraphQL API）
-      - 読み取りは DynamoDB 直結
-      - 書き込みは下の Lambda 経由のカスタム mutation のみ
-    - Lambda（書き込み API）
+      - コメントの読み取りは DynamoDB 直結
+      - 票数の読み取りと書き込みは下の Lambda 経由のカスタム operation のみ
+    - Lambda（6 本）
       - `CreateComment`（投稿）
       - `UpdateComment`（編集）
       - `DeleteComment`（削除）
       - `UpdateVotes`（投票）
       - `DeleteVotes`（投票取り消し）
+      - `VotesByIds`（票数の取得。投票者の一覧は返さない）
 2. そのバックエンドに繋がる bundle をビルドする
     - `build/static/js/main.min.js`
     - `build/static/css/main.min.css`

@@ -12,7 +12,6 @@ import {
   SendFill,
   BoxArrowRight,
   Google,
-  Facebook,
   Github,
   QuestionCircle,
 } from "react-bootstrap-icons"
@@ -27,7 +26,6 @@ import { CreateCommentMutationVariables, UpdateCommentMutationVariables } from '
 import {
   ENABLED_OAUTH_ORIGINAL,
   ENABLED_OAUTH_GOOGLE,
-  ENABLED_OAUTH_FACEBOOK,
   ENABLED_OAUTH_LINE,
   ENABLED_OAUTH_GITHUB,
 } from "../../config"
@@ -74,7 +72,7 @@ export const RowFooter = ({
     editingCommentId?:string,
     closeEditor?:()=>void,
   }) => {
-  const { isAuthenticated, setIsOpenDialog, signInWithFacebook, signInWithLine, displayName, signOut, signInErrorMessage } = useAuth()
+  const { isAuthenticated, setIsOpenDialog, signInWithLine, displayName, signOut, signInErrorMessage } = useAuth()
   const { username, siteURL, editingComments, isStored, saveStoreData, removeStoreData, setUsername, clearEditingComments } = useStoreData()
   const { slug } = useSlug()
   const { SignInGoogleModal, openSignInGoogleModal } = useSignInGoogleModal()
@@ -218,7 +216,6 @@ export const RowFooter = ({
         <SignInGoogleModal />
         <div className="mb-1" style={{display:"flex", alignItems:"end", fontWeight:500}}>comment with <QuestionCircle className="mb-1" style={{cursor:"pointer"}} onClick={handleOpenWhySingInModal} />:</div>
         {ENABLED_OAUTH_ORIGINAL ? <StyledPrimaryButton onClick={handleOpenSignInModal}><Image roundedCircle src="/favicon-32x32.png" /></StyledPrimaryButton > : null}
-        {ENABLED_OAUTH_FACEBOOK ? <Button className="m-1 bc-oauth-button" variant="primary" aria-label="Facebook SignIn" onClick={() => signInWithFacebook()}><Facebook /></Button> : null}
         {ENABLED_OAUTH_GOOGLE ? <Button className="m-1 bc-oauth-button" variant="primary" aria-label="Google SignIn" onClick={() => openSignInGoogleModal()}><Google /></Button> : null}
         {ENABLED_OAUTH_LINE ? <OnLineImage onClick={() => signInWithLine()} /> : null}
 
