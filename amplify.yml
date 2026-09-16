@@ -1,0 +1,26 @@
+version: 1
+backend:
+  phases:
+    build:
+      commands:
+        # Vite 8 / TypeScript 7 / Amplify Gen2 は Node 22 が必要
+        - nvm install 22
+        - npm ci --cache .npm --prefer-offline
+        # Gen2 バックエンドをこのブランチ用にデプロイし、amplify_outputs.json を生成する
+        - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
+frontend:
+  phases:
+    build:
+      commands:
+        # 回帰検知: フロントと Lambda のテストが通らなければデプロイしない
+        - npm test
+        # Vite が main.min.js / main.min.css を固定名で直接出力する (vite.config.ts)
+        - npm run build
+  artifacts:
+    baseDirectory: build
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - .npm/**/*
+      - node_modules/**/*

@@ -1,0 +1,24 @@
+{
+  "version": "1.4",
+  "auth": {
+    "aws_region": "ap-northeast-1",
+    "user_pool_id": "ap-northeast-1_XXXXXXXXX",
+    "user_pool_client_id": "xxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "identity_pool_id": "ap-northeast-1:00000000-0000-0000-0000-000000000000",
+    "unauthenticated_identities_enabled": true,
+    "oauth": {
+      "identity_providers": ["GOOGLE"],
+      "domain": "example.auth.ap-northeast-1.amazoncognito.com",
+      "scopes": ["email", "openid", "profile"],
+      "redirect_sign_in_uri": ["http://localhost:3000/", "https://example.com/"],
+      "redirect_sign_out_uri": ["http://localhost:3000/", "https://example.com/"],
+      "response_type": "code"
+    }
+  },
+  "data": {
+    "aws_region": "ap-northeast-1",
+    "url": "https://example.appsync-api.ap-northeast-1.amazonaws.com/graphql",
+    "default_authorization_type": "AMAZON_COGNITO_USER_POOLS",
+    "authorization_types": ["AWS_IAM"]
+  }
+}

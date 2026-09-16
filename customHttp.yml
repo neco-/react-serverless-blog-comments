@@ -1,0 +1,57 @@
+# Amplify Hosting のカスタムヘッダー。リポジトリのルートに置くとビルド時に取り込まれる。
+#
+# 注意: このファイルがあると Amplify コンソールで設定したカスタムヘッダーは使われなくなる。
+# コンソール側で足していた設定があれば、ここへ書き写すこと。
+#
+# なぜ必要か:
+#   Amplify の既定は `public, max-age=0, s-maxage=31536000` で、CloudFront には 1 年載るが
+#   ブラウザは毎回 304 の往復を払う。main.min.js は 1.8MB（brotli で約 500KB）あり、
+#   記事を開くたびにこの再検証がスクリプト実行の前に挟まって遅い。
+#
+#   ハッシュを付ければ immutable にできるが、Hugo 側が固定 URL を読み込む設計なので
+#   エントリだけは固定名のままにし、stale-while-revalidate で再検証をブロックしない形にする。
+#   max-age を過ぎてもキャッシュから即座に返し、更新は裏で取りに行く。
+
+customHeaders:
+  # 既定の CORS。埋め込み側が crossorigin="anonymous" で読み込むため必須。
+  # （Amplify の既定値をこのファイルで上書きしてしまうので、明示的に書き戻している）
+  - pattern: '/static/**'
+    headers:
+      - key: 'Access-Control-Allow-Origin'
+        value: '*'
+      - key: 'Access-Control-Allow-Methods'
+        value: 'GET'
+      - key: 'Access-Control-Allow-Headers'
+        value: '*'
+      - key: 'X-Content-Type-Options'
+        value: 'nosniff'
+
+  # ハッシュ付きのファイルは内容が変われば URL も変わるので、無期限に固定できる。
+  # 現状ここに来るのは動的 import のチャンクと画像（vite.config.ts）。
+  - pattern: '/static/js/*-*.min.js'
+    headers:
+      - key: 'Cache-Control'
+        value: 'public, max-age=31536000, immutable'
+  - pattern: '/static/media/**'
+    headers:
+      - key: 'Cache-Control'
+        value: 'public, max-age=31536000, immutable'
+
+  # 固定名のエントリ。Hugo 側がこの URL を直接読む。
+  #   max-age=600             : 10 分は問い合わせない
+  #   stale-while-revalidate  : その後もキャッシュから即返し、更新は裏で取る（往復で待たせない）
+  #   s-maxage=31536000       : CloudFront は長く保持（デプロイのたびに Amplify が無効化する）
+  - pattern: '/static/js/main.min.js'
+    headers:
+      - key: 'Cache-Control'
+        value: 'public, max-age=600, stale-while-revalidate=86400, s-maxage=31536000'
+  - pattern: '/static/css/main.min.css'
+    headers:
+      - key: 'Cache-Control'
+        value: 'public, max-age=600, stale-while-revalidate=86400, s-maxage=31536000'
+
+  # 動作確認用のページ。ブログからは読まないので毎回確認してよい。
+  - pattern: '/index.html'
+    headers:
+      - key: 'Cache-Control'
+        value: 'public, max-age=0, must-revalidate'

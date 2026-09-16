@@ -1,0 +1,637 @@
+/*
+ * ウィジェットの見た目をここで完結させる。
+ *
+ * react-bootstrap のコンポーネントは使い続けるが、Bootstrap の CSS は読み込まない。
+ * react-bootstrap が出力するクラスの見た目をここで定義する。埋め込む側に Bootstrap の
+ * 読み込みを要求しないため。
+ *
+ * すべての規則を #blogcomments 配下に限定する。html や body、全要素へのリセットは書かない。
+ * 埋め込み先の記事本文を巻き込まないため。モーダルとツールチップも #blogcomments の中へ
+ * 描画している（components/… の container 指定）ので、この限定から外れない。
+ *
+ * 寸法と色は Bootstrap 5.3 の既定に合わせてある（移行時に見た目を変えないため）。
+ */
+
+/*
+ * 配色はカスタムプロパティに集める。既定はライト。
+ *
+ * ダークへの切り替えは 2 経路ある。
+ *   1. OS の prefers-color-scheme に追従する（既定）
+ *   2. 埋め込む側が #blogcomments に data-bc-theme="light" / "dark" を付けて強制する
+ *
+ * 2 は独自のテーマ切替を持つホストのための逃げ道で、OS の設定より優先する。
+ * カスタムプロパティは @media を跨いで使い回せないため、ダークの定義は 2 か所に書く。
+ */
+#blogcomments {
+  --bc-color: #212529;
+  --bc-border: #dee2e6;
+  --bc-bg: #fff;
+  --bc-bg-subtle: #f8f9fa;
+  --bc-muted: #6c757d;
+  --bc-primary: #0d6efd;
+  --bc-primary-hover: #0b5ed7;
+  --bc-primary-active: #0a58ca;
+  --bc-success: #198754;
+  --bc-success-hover: #157347;
+  /* 純赤は白地で 4.0:1 しかないので、4.5:1 を満たす赤にする（実測 6.5:1） */
+  --bc-danger: #b02a37;
+  /* 主要色を文字と枠に使うとき。地の上に載せる面としての --bc-primary とは別に持つ
+     （暗い地の上では #0d6efd は 3.4:1 しかない） */
+  --bc-primary-text: #0d6efd;
+  --bc-focus-ring: rgba(13, 110, 253, 0.25);
+  --bc-focus-border: #86b7fe;
+  /* 主要色・成功色の上に載せる文字。どちらの地でも 4.5:1 を満たす */
+  --bc-on-accent: #fff;
+  --bc-border-subtle: rgba(0, 0, 0, 0.125);
+  --bc-border-strong: rgba(0, 0, 0, 0.2);
+  --bc-check-border: rgba(0, 0, 0, 0.25);
+  --bc-backdrop: #000;
+  --bc-tooltip-bg: #000;
+  --bc-tooltip-fg: #fff;
+  /* 閉じるボタンのアイコンは SVG に色が焼き込んであるので、反転で明暗を合わせる */
+  --bc-close-filter: none;
+  --bc-footer-bg: #f6f6f6;
+  --bc-footer-border: #ced4da;
+  /* data-bc-theme で強制されたときだけ使う地の色 */
+  --bc-page-bg: #fff;
+  /*
+   * アバターの地色。Avatar は頭文字から 7 色を選び、白文字を載せる。
+   * どれも白文字で 4.5:1 以上あり、明暗で変える必要がないので固定する。
+   * Bootstrap の既定のうち danger #dc3545（3.9:1）warning #ffc107（1.6:1）
+   * info #0dcaf0（1.9:1）は白文字で足りないため、暗い同系色に差し替えてある。
+   */
+  --bc-surface-primary: #0d6efd;
+  --bc-surface-secondary: #6c757d;
+  --bc-surface-success: #198754;
+  --bc-surface-danger: #b02a37;
+  --bc-surface-warning: #8a5a00;
+  --bc-surface-info: #0a7b8c;
+  --bc-surface-dark: #343a40;
+  --bc-radius: 0.375rem;
+  --bc-radius-sm: 0.25rem;
+  --bc-gutter-x: 1.5rem;
+  color-scheme: light;
+  /* 文字色はホストから継承せず自分で持つ。強制指定されたとき地と食い違わないため */
+  color: var(--bc-color);
+}
+
+@media (prefers-color-scheme: dark) {
+  #blogcomments:not([data-bc-theme="light"]) {
+  --bc-color: #dee2e6;
+  --bc-border: #495057;
+  --bc-bg: #212529;
+  --bc-bg-subtle: #2b3035;
+  --bc-muted: #adb5bd;
+  --bc-danger: #ea868f;
+  --bc-primary-text: #6ea8fe;
+  --bc-border-subtle: rgba(255, 255, 255, 0.15);
+  --bc-border-strong: rgba(255, 255, 255, 0.2);
+  --bc-check-border: rgba(255, 255, 255, 0.3);
+  --bc-tooltip-bg: #495057;
+  --bc-close-filter: invert(1) grayscale(100%) brightness(200%);
+  --bc-footer-bg: #2b3035;
+  --bc-footer-border: #495057;
+  --bc-page-bg: #1a1d20;
+  color-scheme: dark;
+  }
+}
+
+#blogcomments[data-bc-theme="dark"] {
+  --bc-color: #dee2e6;
+  --bc-border: #495057;
+  --bc-bg: #212529;
+  --bc-bg-subtle: #2b3035;
+  --bc-muted: #adb5bd;
+  --bc-danger: #ea868f;
+  --bc-primary-text: #6ea8fe;
+  --bc-border-subtle: rgba(255, 255, 255, 0.15);
+  --bc-border-strong: rgba(255, 255, 255, 0.2);
+  --bc-check-border: rgba(255, 255, 255, 0.3);
+  --bc-tooltip-bg: #495057;
+  --bc-close-filter: invert(1) grayscale(100%) brightness(200%);
+  --bc-footer-bg: #2b3035;
+  --bc-footer-border: #495057;
+  --bc-page-bg: #1a1d20;
+  color-scheme: dark;
+}
+
+/*
+ * 地の色は既定では塗らない。ホストの背景をそのまま見せた方が馴染むため。
+ * ただし data-bc-theme で強制されたときはホストと食い違うので、自分で塗る。
+ */
+#blogcomments[data-bc-theme] {
+  background-color: var(--bc-page-bg);
+}
+
+#blogcomments,
+#blogcomments *,
+#blogcomments *::before,
+#blogcomments *::after {
+  box-sizing: border-box;
+}
+
+/*
+ * Bootstrap の Reboot が持っていた規則のうち、ウィジェットの見た目に効いていたものだけを
+ * #blogcomments の中に限定して補う。html や body、全要素へのリセットは持ち込まない。
+ */
+
+/* 画像とアイコンをベースラインに乗せない。乗せるとディセンダ分だけ行が高くなり、
+   アイコン付きボタンが 5px ほど縦に伸びる。 */
+#blogcomments img,
+#blogcomments svg {
+  vertical-align: middle;
+}
+
+/* フォーム部品は既定でブラウザ固有のフォントと余白を持つ。埋め込み先の書体に合わせる。 */
+#blogcomments button,
+#blogcomments input,
+#blogcomments optgroup,
+#blogcomments select,
+#blogcomments textarea {
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+#blogcomments label {
+  display: inline-block;
+}
+
+/* ---- グリッド ---- */
+
+#blogcomments .container {
+  width: 100%;
+  padding-right: calc(var(--bc-gutter-x) * 0.5);
+  padding-left: calc(var(--bc-gutter-x) * 0.5);
+  margin-right: auto;
+  margin-left: auto;
+}
+@media (min-width: 576px) { #blogcomments .container { max-width: 540px; } }
+@media (min-width: 768px) { #blogcomments .container { max-width: 720px; } }
+@media (min-width: 992px) { #blogcomments .container { max-width: 960px; } }
+@media (min-width: 1200px) { #blogcomments .container { max-width: 1140px; } }
+@media (min-width: 1400px) { #blogcomments .container { max-width: 1320px; } }
+
+#blogcomments .row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: calc(var(--bc-gutter-x) * -0.5);
+  margin-left: calc(var(--bc-gutter-x) * -0.5);
+}
+#blogcomments .row > * {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+  padding-right: calc(var(--bc-gutter-x) * 0.5);
+  padding-left: calc(var(--bc-gutter-x) * 0.5);
+}
+
+#blogcomments .col { flex: 1 0 0%; }
+#blogcomments .col-2 { flex: 0 0 auto; width: 16.66666667%; }
+@media (min-width: 576px) {
+  #blogcomments .col-sm-2 { flex: 0 0 auto; width: 16.66666667%; }
+}
+@media (min-width: 768px) {
+  #blogcomments .col-md-4 { flex: 0 0 auto; width: 33.33333333%; }
+  #blogcomments .col-md-8 { flex: 0 0 auto; width: 66.66666667%; }
+  #blogcomments .col-md-10 { flex: 0 0 auto; width: 83.33333333%; }
+  #blogcomments .col-md-auto { flex: 0 0 auto; width: auto; }
+}
+
+#blogcomments .justify-content-center { justify-content: center; }
+#blogcomments .d-inline-block { display: inline-block; }
+
+/* ---- 余白 ---- */
+
+#blogcomments .m-1 { margin: 0.25rem; }
+#blogcomments .mt-1 { margin-top: 0.25rem; }
+#blogcomments .mt-5 { margin-top: 3rem; }
+#blogcomments .mb-1 { margin-bottom: 0.25rem; }
+#blogcomments .me-2 { margin-right: 0.5rem; }
+#blogcomments .ms-0 { margin-left: 0; }
+#blogcomments .ms-1 { margin-left: 0.25rem; }
+#blogcomments .ms-3 { margin-left: 1rem; }
+#blogcomments .p-0 { padding: 0; }
+#blogcomments .ps-0 { padding-left: 0; }
+#blogcomments .pe-0 { padding-right: 0; }
+
+/* ---- フォーム ---- */
+
+#blogcomments .form-control {
+  display: block;
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--bc-color);
+  background-color: var(--bc-bg);
+  background-clip: padding-box;
+  border: 1px solid var(--bc-border);
+  border-radius: var(--bc-radius);
+  appearance: none;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+#blogcomments .form-control:focus {
+  border-color: var(--bc-focus-border);
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem var(--bc-focus-ring);
+}
+#blogcomments .form-control::placeholder { color: var(--bc-muted); opacity: 1; }
+#blogcomments .form-control:disabled { background-color: var(--bc-bg-subtle); opacity: 1; }
+
+#blogcomments .form-check {
+  display: block;
+  min-height: 1.5rem;
+  padding-left: 1.5em;
+  margin-bottom: 0.125rem;
+}
+#blogcomments .form-check-input {
+  float: left;
+  width: 1em;
+  height: 1em;
+  margin-top: 0.25em;
+  margin-left: -1.5em;
+  vertical-align: top;
+  appearance: none;
+  background-color: var(--bc-bg);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  border: 1px solid var(--bc-check-border);
+  border-radius: 0.25em;
+  cursor: pointer;
+}
+#blogcomments .form-check-input:checked {
+  background-color: var(--bc-primary);
+  border-color: var(--bc-primary);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+}
+#blogcomments .form-check-input:focus {
+  border-color: var(--bc-focus-border);
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem var(--bc-focus-ring);
+}
+#blogcomments .form-check-label { cursor: pointer; }
+
+/* ---- 入力グループ ---- */
+
+#blogcomments .input-group {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  width: 100%;
+}
+#blogcomments .input-group > .form-control {
+  position: relative;
+  flex: 1 1 auto;
+  width: 1%;
+  min-width: 0;
+}
+#blogcomments .input-group-text {
+  display: flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--bc-color);
+  text-align: center;
+  white-space: nowrap;
+  background-color: var(--bc-bg-subtle);
+  border: 1px solid var(--bc-border);
+  border-radius: var(--bc-radius);
+}
+#blogcomments .input-group > :not(:first-child) {
+  margin-left: -1px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+#blogcomments .input-group > :not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+#blogcomments .input-group-sm > .form-control,
+#blogcomments .input-group-sm > .input-group-text {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  border-radius: var(--bc-radius-sm);
+}
+#blogcomments .input-group-sm > :not(:first-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+#blogcomments .input-group-sm > :not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* ---- ボタン ---- */
+
+#blogcomments .btn {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--bc-color);
+  text-align: center;
+  text-decoration: none;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--bc-radius);
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+#blogcomments .btn:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem var(--bc-focus-ring);
+}
+#blogcomments .btn:disabled { opacity: 0.65; pointer-events: none; }
+#blogcomments .btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  border-radius: var(--bc-radius-sm);
+}
+
+#blogcomments .btn-primary {
+  color: var(--bc-on-accent);
+  background-color: var(--bc-primary);
+  border-color: var(--bc-primary);
+}
+#blogcomments .btn-primary:hover {
+  background-color: var(--bc-primary-hover);
+  border-color: var(--bc-primary-hover);
+}
+#blogcomments .btn-primary:active { background-color: var(--bc-primary-active); }
+
+#blogcomments .btn-success {
+  color: var(--bc-on-accent);
+  background-color: var(--bc-success);
+  border-color: var(--bc-success);
+}
+#blogcomments .btn-success:hover {
+  background-color: var(--bc-success-hover);
+  border-color: var(--bc-success-hover);
+}
+
+/* Cancel と SignOut のボタン。段階 1 で定義し忘れ、地なしの文字だけになっていた */
+#blogcomments .btn-secondary {
+  color: var(--bc-on-accent);
+  background-color: var(--bc-surface-secondary);
+  border-color: var(--bc-surface-secondary);
+}
+#blogcomments .btn-secondary:hover,
+#blogcomments .btn-secondary:active {
+  background-color: #5c636a;
+  border-color: #565e64;
+}
+
+#blogcomments .btn-outline-primary {
+  color: var(--bc-primary-text);
+  border-color: var(--bc-primary-text);
+}
+#blogcomments .btn-outline-primary:hover,
+#blogcomments .btn-outline-primary.active,
+#blogcomments .btn-check:checked + .btn-outline-primary {
+  color: var(--bc-on-accent);
+  background-color: var(--bc-primary);
+  border-color: var(--bc-primary);
+}
+
+#blogcomments .btn-check {
+  position: absolute;
+  clip: rect(0, 0, 0, 0);
+  pointer-events: none;
+}
+#blogcomments .btn-check:focus-visible + .btn {
+  box-shadow: 0 0 0 0.25rem var(--bc-focus-ring);
+}
+
+#blogcomments .btn-group {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+}
+#blogcomments .btn-group > .btn { position: relative; flex: 1 1 auto; }
+#blogcomments .btn-group > .btn:not(:first-child) {
+  margin-left: -1px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+#blogcomments .btn-group > .btn:not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* ---- バッジ ---- */
+
+#blogcomments .badge {
+  display: inline-block;
+  padding: 0.35em 0.65em;
+  font-size: 0.75em;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--bc-on-accent);
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: var(--bc-radius);
+}
+/*
+ * Avatar が使う 7 色。段階 1 では secondary と success しか定義しておらず、
+ * 残り 5 色のバッジが地なしの白文字になって見えなくなっていた。
+ */
+#blogcomments .bg-primary { background-color: var(--bc-surface-primary); }
+#blogcomments .bg-secondary { background-color: var(--bc-surface-secondary); }
+#blogcomments .bg-success { background-color: var(--bc-surface-success); }
+#blogcomments .bg-danger { background-color: var(--bc-surface-danger); }
+#blogcomments .bg-warning { background-color: var(--bc-surface-warning); }
+#blogcomments .bg-info { background-color: var(--bc-surface-info); }
+#blogcomments .bg-dark { background-color: var(--bc-surface-dark); }
+#blogcomments .text-white { color: var(--bc-on-accent); }
+#blogcomments .rounded-circle { border-radius: 50%; }
+
+/* ---- リストグループ ---- */
+
+#blogcomments .list-group {
+  display: flex;
+  flex-direction: column;
+  padding-left: 0;
+  margin-bottom: 0;
+  border-radius: var(--bc-radius);
+}
+#blogcomments .list-group-item {
+  position: relative;
+  display: block;
+  padding: 0.5rem 1rem;
+  color: var(--bc-color);
+  background-color: var(--bc-bg);
+  border: 1px solid var(--bc-border-subtle);
+}
+#blogcomments .list-group-item + .list-group-item { border-top-width: 0; }
+#blogcomments .list-group-flush { border-radius: 0; }
+#blogcomments .list-group-flush > .list-group-item {
+  border-width: 0 0 1px;
+}
+#blogcomments .list-group-flush > .list-group-item:last-child { border-bottom-width: 0; }
+
+/* ---- モーダル ---- */
+
+#blogcomments .modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1055;
+  display: none;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  outline: 0;
+}
+#blogcomments .modal-dialog {
+  position: relative;
+  width: auto;
+  margin: 0.5rem;
+  pointer-events: none;
+}
+@media (min-width: 576px) {
+  #blogcomments .modal-dialog { max-width: 500px; margin: 1.75rem auto; }
+}
+#blogcomments .modal.fade .modal-dialog {
+  transform: translate(0, -50px);
+  transition: transform 0.3s ease-out;
+}
+#blogcomments .modal.show .modal-dialog { transform: none; }
+#blogcomments .modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  color: var(--bc-color);
+  pointer-events: auto;
+  background-color: var(--bc-bg);
+  background-clip: padding-box;
+  border: 1px solid var(--bc-border-strong);
+  border-radius: 0.5rem;
+  outline: 0;
+}
+#blogcomments .modal-header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--bc-border);
+  border-top-left-radius: calc(0.5rem - 1px);
+  border-top-right-radius: calc(0.5rem - 1px);
+}
+#blogcomments .modal-title { margin-bottom: 0; line-height: 1.5; }
+#blogcomments .modal-body { position: relative; flex: 1 1 auto; padding: 1rem; }
+#blogcomments .modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1050;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--bc-backdrop);
+  opacity: 0;
+  transition: opacity 0.15s linear;
+}
+#blogcomments .modal-backdrop.show { opacity: 0.5; }
+
+#blogcomments .btn-close {
+  box-sizing: content-box;
+  width: 1em;
+  height: 1em;
+  padding: 0.25em;
+  color: var(--bc-color);
+  background: transparent
+    url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414'/%3e%3c/svg%3e")
+    center / 1em auto no-repeat;
+  border: 0;
+  border-radius: var(--bc-radius);
+  opacity: 0.5;
+  cursor: pointer;
+  filter: var(--bc-close-filter);
+}
+#blogcomments .btn-close:hover { opacity: 0.75; }
+#blogcomments .btn-close:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem var(--bc-focus-ring);
+  opacity: 1;
+}
+
+/* ---- ツールチップ ---- */
+
+#blogcomments .tooltip {
+  position: absolute;
+  z-index: 1080;
+  display: block;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  text-align: left;
+  word-wrap: break-word;
+  opacity: 0;
+}
+#blogcomments .tooltip.show { opacity: 0.9; }
+#blogcomments .tooltip-inner {
+  max-width: 200px;
+  padding: 0.25rem 0.5rem;
+  color: var(--bc-tooltip-fg);
+  text-align: center;
+  background-color: var(--bc-tooltip-bg);
+  border-radius: var(--bc-radius);
+}
+
+/* ---- 淡色の切り替え（react-bootstrap の Fade） ---- */
+
+#blogcomments .fade { transition: opacity 0.15s linear; }
+#blogcomments .fade:not(.show) { opacity: 0; }
+
+/* ---- フッター（旧 components/editor/footer.css） ---- */
+
+/*
+ * 以前は components/editor/footer.css に素の .footer として置いていた。
+ * #blogcomments の外にも効くグローバルなクラス名だったので、ここへ移してスコープを合わせる。
+ */
+#blogcomments .footer {
+  background-color: var(--bc-footer-bg);
+  color: var(--bc-color);
+  border: 1px solid var(--bc-footer-border);
+  border-radius: 0.25em;
+}
+
+/* ---- ソーシャルログインのボタン ---- */
+
+/*
+ * 中身が画像 32px・アイコン 16px・LINE のボタン画像 40px とまちまちで、
+ * 横幅が中身まかせだったため 4 つの寸法が揃っていなかった。正方形に固定する。
+ * 46px は「操作要素は 44px 以上」も満たす。
+ */
+#blogcomments .bc-oauth-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+}
+
+/* LINE は画像そのものがボタン。元画像が 40x40 の正方形なので比率は変わらない */
+#blogcomments .bc-oauth-line {
+  cursor: pointer;
+}
+#blogcomments .bc-oauth-line img {
+  width: 100%;
+  height: 100%;
+}
