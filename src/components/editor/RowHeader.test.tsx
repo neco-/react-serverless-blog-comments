@@ -3,14 +3,23 @@ import { render, screen } from '@testing-library/react'
 import { RowHeader } from './RowHeader'
 
 // クレジット表記は config 次第で出し分ける。既定（空文字）ではどこにも出さない。
+// config は環境変数（VITE_POWERED_BY_*）を読むので、ビルド環境の値に左右されないよう毎回モックする。
 describe('RowHeader のクレジット表記', () => {
   afterEach(() => {
     vi.resetModules()
     vi.doUnmock('../../config')
   })
 
-  it('既定の config ではクレジットを出さない', () => {
-    render(<RowHeader isReply={false} />)
+  it('既定の config（両方とも空）ではクレジットを出さない', async () => {
+    vi.resetModules()
+    vi.doMock('../../config', async () => ({
+      ...(await vi.importActual<typeof import('../../config')>('../../config')),
+      POWERED_BY_LABEL: '',
+      POWERED_BY_URL: '',
+    }))
+    const { RowHeader: Mocked } = await import('./RowHeader')
+
+    render(<Mocked isReply={false} />)
     expect(screen.getByText('Comments')).toBeInTheDocument()
     expect(screen.queryByRole('link')).toBeNull()
   })
