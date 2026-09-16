@@ -28,6 +28,13 @@ describe('RowFooter（未ログイン）', () => {
     expect(screen.queryByLabelText('Github SignIn')).toBeNull()
     expect(screen.queryByText('Send')).toBeNull()
   })
+  it('「comment with ?」の文言ごと押せて、理由の説明が開く', async () => {
+    // 16px のアイコンだけを狙わせない。文言全体を当たり判定にする
+    const user = userEvent.setup()
+    renderWithClients(<RowFooter />)
+    await user.click(screen.getByRole('button', { name: 'Why sign in?' }))
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+  })
   it('LINE ボタンで signInWithProvider が呼ばれる', async () => {
     const user = userEvent.setup()
     const { authClient } = renderWithClients(<RowFooter />)

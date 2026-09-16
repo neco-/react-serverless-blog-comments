@@ -192,7 +192,7 @@ export const RowFooter = ({
             {(inReplyTo || isEditing)
               ? <Button className="ms-3" variant="secondary" onClick={handleCancel}>Cancel</Button>
               : <SignOutButton />}
-            <Button className="ms-1" onClick={handleSend}><SendFill /> Send</Button>
+            <Button className="ms-3" onClick={handleSend}><SendFill /> Send</Button>
           </div>
         </div>
       </Row>
@@ -214,7 +214,8 @@ export const RowFooter = ({
       <Col md={8} style={{display:"flex", justifyContent:"right"}}>
         <WhySignInModal isOpen={isOpenWhyModal} onClose={handleCloseWhySignInModal}/>
         <SignInGoogleModal />
-        <div className="mb-1" style={{display:"flex", alignItems:"end", fontWeight:500}}>comment with <QuestionCircle className="mb-1" style={{cursor:"pointer"}} onClick={handleOpenWhySingInModal} />:</div>
+        {/* 16px のアイコンだけを狙わせない。文言全体を当たり判定にする（見た目は文字のまま） */}
+        <button type="button" className="bc-why-signin" aria-label="Why sign in?" onClick={handleOpenWhySingInModal}>comment with <QuestionCircle />:</button>
         {ENABLED_OAUTH_ORIGINAL ? <StyledPrimaryButton onClick={handleOpenSignInModal}><Image roundedCircle src="/favicon-32x32.png" /></StyledPrimaryButton > : null}
         {ENABLED_OAUTH_GOOGLE ? <Button className="m-1 bc-oauth-button" variant="primary" aria-label="Google SignIn" onClick={() => openSignInGoogleModal()}><Google /></Button> : null}
         {ENABLED_OAUTH_LINE ? <OnLineImage onClick={() => signInWithLine()} /> : null}

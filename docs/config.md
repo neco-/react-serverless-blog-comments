@@ -35,12 +35,23 @@ export const ENABLED_OAUTH_GITHUB = false
 
 ## クレジット表記
 
-コメント欄の見出しの右に、任意のリンクを 1 つ出せます。**両方を埋めたときだけ**表示され、
-既定（空文字）では何も出ません。
+コメント欄の見出しの右に、任意のリンクを 1 つ出せます。**両方が埋まっているときだけ**表示され、
+既定では何も出ません。
 
-```ts
-export const POWERED_BY_LABEL = "Powered by example"
-export const POWERED_BY_URL = "https://example.com"
+値はビルド時の環境変数で差し込みます。
+
+| 環境変数 | 値 |
+| --- | --- |
+| `VITE_POWERED_BY_LABEL` | 表示する文言（例: `Powered by example`） |
+| `VITE_POWERED_BY_URL` | リンク先（例: `https://example.com`） |
+
+- ローカルなら shell の環境変数、Amplify Hosting ならコンソールの「環境変数」で
+  ブランチごとに設定します。`.env.local` に書く方法もあります（`.gitignore` 済み）。
+- リポジトリに直接書かないのは、公開用のコピーを作ったときに一緒に載ってしまうからです。
+  自分のリポジトリだけで使うなら、`src/config.ts` の `?? ""` の側を書き換えても構いません。
+
+```sh
+VITE_POWERED_BY_LABEL="Powered by example" VITE_POWERED_BY_URL="https://example.com" npm run build
 ```
 
 ## 自前ログインのボタン画像

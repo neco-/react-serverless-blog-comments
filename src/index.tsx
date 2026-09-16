@@ -8,6 +8,7 @@ import { ClientsProvider } from './lib/clients'
 import { createAmplifyAuthClient } from './lib/authClient'
 import { createAmplifyApiClient } from './lib/apiClient'
 import { startOAuthReturn } from './lib/oauthReturn'
+import { selectRedirectUrls } from './lib/redirectUrls'
 import { navigateTo } from './lib/navigation'
 
 import outputs from '../amplify_outputs.json'
@@ -24,12 +25,8 @@ const amplifyConfig = parseAmplifyConfig(outputs)
 const oauth = amplifyConfig.Auth?.Cognito.loginWith?.oauth
 if (oauth) {
   const { host } = window.location
-  const filterHost = (urls: string[]) => {
-    const matched = urls.filter((url) => new URL(url).host === host)
-    return matched.length > 0 ? matched : urls
-  }
-  oauth.redirectSignIn = filterHost(oauth.redirectSignIn)
-  oauth.redirectSignOut = filterHost(oauth.redirectSignOut)
+  oauth.redirectSignIn = selectRedirectUrls(oauth.redirectSignIn, host)
+  oauth.redirectSignOut = selectRedirectUrls(oauth.redirectSignOut, host)
 }
 
 const bc: HTMLElement | null = document.getElementById('blogcomments')

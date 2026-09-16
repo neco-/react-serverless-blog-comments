@@ -35,6 +35,8 @@
   --bc-success-hover: #157347;
   /* 純赤は白地で 4.0:1 しかないので、4.5:1 を満たす赤にする（実測 6.5:1） */
   --bc-danger: #b02a37;
+  --bc-danger-bg: #dc3545;
+  --bc-danger-bg-hover: #bb2d3b;
   /* 主要色を文字と枠に使うとき。地の上に載せる面としての --bc-primary とは別に持つ
      （暗い地の上では #0d6efd は 3.4:1 しかない） */
   --bc-primary-text: #0d6efd;
@@ -241,9 +243,12 @@
 #blogcomments .form-control::placeholder { color: var(--bc-muted); opacity: 1; }
 #blogcomments .form-control:disabled { background-color: var(--bc-bg-subtle); opacity: 1; }
 
+/* ラベルも押せるので幅は足りるが、行の高さが 16px しかなかった。
+ * 行に高さを持たせ、指で狙える縦幅にする（見た目の位置は変わらない） */
 #blogcomments .form-check {
-  display: block;
-  min-height: 1.5rem;
+  display: flex;
+  align-items: center;
+  min-height: 2rem;
   padding-left: 1.5em;
   margin-bottom: 0.125rem;
 }
@@ -273,7 +278,13 @@
   outline: 0;
   box-shadow: 0 0 0 0.25rem var(--bc-focus-ring);
 }
-#blogcomments .form-check-label { cursor: pointer; }
+/* 当たり判定を持つのは input とラベルだけなので、行でなくラベル自身に高さを持たせる */
+#blogcomments .form-check-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  cursor: pointer;
+}
 
 /* ---- 入力グループ ---- */
 
@@ -378,6 +389,19 @@
 #blogcomments .btn-success:hover {
   background-color: var(--bc-success-hover);
   border-color: var(--bc-success-hover);
+}
+
+/* 削除ボタン。段階 1 で定義し忘れ、赤い枠を失って素のゴミ箱アイコンになっていた。
+ * 復元できない操作なので、押せるものに見えることが最低限の手がかり */
+#blogcomments .btn-danger {
+  color: #fff;
+  background-color: var(--bc-danger-bg);
+  border-color: var(--bc-danger-bg);
+}
+#blogcomments .btn-danger:hover,
+#blogcomments .btn-danger:active {
+  background-color: var(--bc-danger-bg-hover);
+  border-color: var(--bc-danger-bg-hover);
 }
 
 /* Cancel と SignOut のボタン。段階 1 で定義し忘れ、地なしの文字だけになっていた */
@@ -607,6 +631,62 @@
   background-color: var(--bc-footer-bg);
   color: var(--bc-color);
   border: 1px solid var(--bc-footer-border);
+  border-radius: 0.25em;
+}
+
+/* ---- コメントの操作と、削除の確認の帯 ----
+ * 通常のボタン列（.bc-actions-row）はそのまま残し、その上に確認の帯を重ねる。
+ * 帯はゴミ箱（左端）の位置から右へ開いて他のボタンを覆い、Cancel で逆向きに閉じる。
+ * clip-path で「めくる」ので、伸びている途中でもボタンの寸法は最終形のまま */
+#blogcomments .bc-actions { position: relative; display: inline-flex; }
+#blogcomments .bc-actions-row { display: inline-flex; }
+#blogcomments .bc-confirm-delete {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  animation: bc-confirm-grow 0.15s ease-out both;
+}
+#blogcomments .bc-confirm-delete.bc-closing { animation: bc-confirm-shrink 0.15s ease-in both; }
+/* Delete と Cancel は同じ幅 */
+#blogcomments .bc-confirm-delete > .btn { flex: 1 1 0; white-space: nowrap; }
+@keyframes bc-confirm-grow {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+@keyframes bc-confirm-shrink {
+  from { clip-path: inset(0 0 0 0); }
+  to   { clip-path: inset(0 100% 0 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #blogcomments .bc-confirm-delete,
+  #blogcomments .bc-confirm-delete.bc-closing { animation-duration: 0.01s; }
+}
+
+/* 日時は折り返さない。狭い幅では日付と時刻が 2 行に割れるより、
+ * 操作ボタンの側が次の行へ回るほうが読める（自分の投稿と同じ並びになる） */
+#blogcomments .bc-timestamp { white-space: nowrap; }
+
+/* ---- 「comment with ?:」 ----
+ * 理由を説明するモーダルの唯一の入口。16px のアイコンだけを狙わせず、文言全体を
+ * ボタンにする。見た目は文字のまま、高さだけ隣のログインボタンに揃える */
+#blogcomments .bc-why-signin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  min-height: 44px;
+  padding: 0 0.25em;
+  margin: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+#blogcomments .bc-why-signin:hover svg { color: var(--bc-primary); }
+#blogcomments .bc-why-signin:focus-visible {
+  outline: 2px solid var(--bc-focus-border);
+  outline-offset: 2px;
   border-radius: 0.25em;
 }
 

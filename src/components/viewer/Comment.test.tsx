@@ -48,12 +48,54 @@ describe('Comment', () => {
     await waitForAuth(true)
     expect(screen.queryByLabelText('Menu edit')).toBeNull()
   })
-  it('削除ボタンで deleteComment を id 付きで送る', async () => {
+  it('操作の並びは 削除 → 編集 → reply → 投票（削除が左端）', async () => {
+    renderWithClients(<Comment comment={base} depth={0} />, { authClient: signedInAs('u1') })
+    const row = await screen.findByLabelText('Menu actions')
+    const groups = Array.from(row.querySelectorAll('[aria-label^="Menu "]')).map((g) => g.getAttribute('aria-label'))
+    expect(groups).toEqual(['Menu delete', 'Menu edit', 'Menu reply', 'Menu votes'])
+  })
+  // 削除は復元できないので、ゴミ箱の 1 タップでは消さず、その場で確定を求める。
+  // 確認の帯はゴミ箱の位置から右へ伸びて他のボタンを覆う。下のボタン列は残るが操作できない
+  it('ゴミ箱を押しただけでは送らず、Delete と Cancel が出て、下の操作は inert になる', async () => {
     const user = userEvent.setup()
     const { apiClient } = renderWithClients(<Comment comment={base} depth={0} />, { authClient: signedInAs('u1') })
-    const group = await screen.findByLabelText('Menu delete')
-    await user.click(group.querySelector('button')!)
+    await user.click(await screen.findByRole('button', { name: 'Delete' }))
+    expect(apiClient.mutations).toEqual([])
+    expect(screen.getByRole('button', { name: 'Confirm delete' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cancel delete' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Menu actions')).toHaveAttribute('inert')
+  })
+  it('確定を押すと deleteComment を id 付きで送る', async () => {
+    const user = userEvent.setup()
+    const { apiClient } = renderWithClients(<Comment comment={base} depth={0} />, { authClient: signedInAs('u1') })
+    await user.click(await screen.findByRole('button', { name: 'Delete' }))
+    await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
     await waitFor(() => expect(apiClient.mutations).toEqual([{ query: deleteComment, variables: { input: { id: 'c1' } } }]))
+  })
+  it('Cancel を押すと何も送らず、縮む動きのあとに元の操作へ戻る', async () => {
+    const user = userEvent.setup()
+    const { apiClient } = renderWithClients(<Comment comment={base} depth={0} />, { authClient: signedInAs('u1') })
+    await user.click(await screen.findByRole('button', { name: 'Delete' }))
+    await user.click(screen.getByRole('button', { name: 'Cancel delete' }))
+    expect(apiClient.mutations).toEqual([])
+    // 縮むアニメーションの間は帯が残る（jsdom は animationend を出さないので時間切れで閉じる）
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Confirm delete' })).toBeNull())
+    expect(screen.getByLabelText('Menu actions')).not.toHaveAttribute('inert')
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument()
+  })
+  it('Escape でも Cancel と同じように戻る', async () => {
+    const user = userEvent.setup()
+    const { apiClient } = renderWithClients(<Comment comment={base} depth={0} />, { authClient: signedInAs('u1') })
+    await user.click(await screen.findByRole('button', { name: 'Delete' }))
+    await user.keyboard('{Escape}')
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Confirm delete' })).toBeNull())
+    expect(apiClient.mutations).toEqual([])
+  })
+  it('日時は分までで、秒は出さない', () => {
+    renderWithClients(<Comment comment={{ ...base, updatedAt: '2024-01-02T03:04:05Z' }} depth={0} />)
+    // ロケール依存の書式には依らず、「:mm:ss」の形が無いことだけを見る
+    expect(document.body.textContent).not.toMatch(/\d{1,2}:\d{2}:\d{2}/)
+    expect(document.body.textContent).toMatch(/2024/)
   })
   it('siteurl に http が無ければ https:// を補う', () => {
     renderWithClients(<Comment comment={{ ...base, siteurl: 'a.com' }} depth={0} />)

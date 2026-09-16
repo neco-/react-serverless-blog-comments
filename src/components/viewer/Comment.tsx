@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react'
+import React, { memo, useState, useEffect, useRef } from 'react'
 
 import Row from "react-bootstrap/Row"
 import Col from "react-bootstrap/Col"
@@ -22,12 +22,28 @@ import { useAuth } from "../../hooks/useAuth"
 import { useColorScheme } from "../../hooks/useColorScheme"
 import { CommentProps } from './CommentProps'
 
+// 確認の帯が伸び縮みする時間。CSS の bc-confirm-grow / bc-confirm-shrink と揃える
+export const CONFIRM_ANIMATION_MS = 150
+
 export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: number}) => {
   const { isAuthenticated, setIsOpenDialog, username } = useAuth()
   const colorScheme = useColorScheme()
   const apiClient = useApiClient()
   const [isOpenReplyEditor, setIsOpenReplyEditor] = useState<boolean>(false)
   const [isEditing, setIsEditing] = useState<boolean>(false)
+  // 削除の確認は、ゴミ箱の位置から右へ伸びる帯で行う。閉じるときは逆向きに縮む
+  const [confirmPhase, setConfirmPhase] = useState<'closed' | 'open' | 'closing'>('closed')
+  const closeTimer = useRef<number | undefined>(undefined)
+  const finishClosing = () => {
+    window.clearTimeout(closeTimer.current)
+    setConfirmPhase('closed')
+  }
+  const startClosing = () => {
+    setConfirmPhase('closing')
+    // animationend が来ない環境（動きを減らす設定、テスト）でも必ず閉じる
+    closeTimer.current = window.setTimeout(finishClosing, CONFIRM_ANIMATION_MS + 50)
+  }
+  useEffect(() => () => window.clearTimeout(closeTimer.current), [])
 
   useEffect(() => {
     setIsOpenReplyEditor(false)
@@ -53,6 +69,7 @@ export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: num
   }
 
   const handleDeleteComment = (id: string) => {
+    finishClosing()
     setIsEditing(false)
     const sendRequest = async () => {
       const deleteCommentInput: DeleteCommentMutationVariables = {
@@ -66,7 +83,10 @@ export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: num
   }
 
   const edited = !comment.deletedAt && comment.updatedAt !== comment.createdAt ? "(edited)" : ""
-  const timestamp = new Date(comment.updatedAt).toLocaleString()
+  // 秒まで出すとスマホ幅で日時が 2 行に折れる。分で十分
+  const timestamp = new Date(comment.updatedAt).toLocaleString(undefined, {
+    year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+  })
   const content = (comment.content && comment.content !== "") ? comment.content : "(Deleted)"
   const isEditable = isAuthenticated && !comment.deletedAt && (comment.userId === username)
   const SiteURL = () => {
@@ -89,28 +109,46 @@ export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: num
             <div style={{fontWeight:700}}>{comment.displayName} <SiteURL /></div>
           </Row>
           <Row>
-            <div style={{fontWeight:300}}>{timestamp} {edited}</div>
+            <div className="bc-timestamp" style={{fontWeight:300}}>{timestamp} {edited}</div>
           </Row>
         </Col>
         <Col style={{display:"flex", justifyContent:"right", alignSelf:"flex-start"}}>
-        {isEditable &&
-          <ButtonGroup className="me-2" aria-label="Menu edit">
-            <Button variant="success" size="sm" onClick={() => handleOpenEdit()}><PencilSquare /></Button>
-          </ButtonGroup>
-        }
-        {isEditable &&
-          <ButtonGroup className="me-2" aria-label="Menu delete">
-            <Button variant="danger" size="sm" onClick={() => handleDeleteComment(comment.id)}><Trash /></Button>
-          </ButtonGroup>
-        }
-        {depth < 2 &&
-          <ButtonGroup className="me-2" aria-label="Menu reply">
-            <Button variant="success" size="sm" onClick={handleOpenReply}>reply</Button>
-          </ButtonGroup>
-        }
-          <ButtonGroup aria-label="Menu votes">
-          <VoteHeart votes={comment.votes} />
-          </ButtonGroup>
+        <div className="bc-actions">
+          {/* 通常の操作。確認中は帯の下に残るが、inert で押せなくする */}
+          <div className="bc-actions-row" aria-label="Menu actions" inert={confirmPhase !== 'closed' || undefined}>
+            {isEditable &&
+              <ButtonGroup className="me-2" aria-label="Menu delete">
+                <Button variant="danger" size="sm" aria-label="Delete" onClick={() => setConfirmPhase('open')}><Trash /></Button>
+              </ButtonGroup>
+            }
+            {isEditable &&
+              <ButtonGroup className="me-2" aria-label="Menu edit">
+                <Button variant="success" size="sm" onClick={() => handleOpenEdit()}><PencilSquare /></Button>
+              </ButtonGroup>
+            }
+            {depth < 2 &&
+              <ButtonGroup className="me-2" aria-label="Menu reply">
+                <Button variant="success" size="sm" onClick={handleOpenReply}>reply</Button>
+              </ButtonGroup>
+            }
+            <ButtonGroup aria-label="Menu votes">
+              <VoteHeart votes={comment.votes} />
+            </ButtonGroup>
+          </div>
+          {/* 削除は復元できないので、ゴミ箱の 1 タップでは消さず、その場で確定を求める。
+              帯はゴミ箱の左端から右へ伸びて他のボタンを覆い、Delete と Cancel を同じ幅で出す */}
+          {confirmPhase !== 'closed' &&
+            <ButtonGroup
+              className={"bc-confirm-delete" + (confirmPhase === 'closing' ? " bc-closing" : "")}
+              aria-label="Menu confirm delete"
+              onAnimationEnd={() => { if (confirmPhase === 'closing') finishClosing() }}
+              onKeyDown={(e) => { if (e.key === 'Escape') startClosing() }}
+            >
+              <Button variant="danger" size="sm" aria-label="Confirm delete" disabled={confirmPhase === 'closing'} onClick={() => handleDeleteComment(comment.id)}><Trash /> Delete</Button>
+              <Button variant="secondary" size="sm" aria-label="Cancel delete" autoFocus disabled={confirmPhase === 'closing'} onClick={startClosing}>Cancel</Button>
+            </ButtonGroup>
+          }
+        </div>
         </Col>
       </Row>
       <Row>
