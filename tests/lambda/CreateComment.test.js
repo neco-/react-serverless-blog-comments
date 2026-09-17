@@ -32,6 +32,25 @@ describe('CreateComment', () => {
     const puts = db.calls.filter((c) => c.op === 'put')
     expect(puts[1].params.Item).toMatchObject({ siteurl: 'https://a.com', replyTo: 'parent' })
   })
+  it('Comment の put に失敗したら、先に作った Votes を消してから throw する', async () => {
+    db.respond('put', (params) => {
+      if (params.TableName !== 'Comment-test') return {}
+      const e = new Error('nope'); e.name = 'X'; throw e
+    })
+    await expect(handler(event({ slug: 's', displayName: 'a', content: 'c' }))).rejects.toThrow('X:nope')
+    expect(db.calls.map((c) => c.op)).toEqual(['put', 'put', 'delete'])
+    const del = db.calls[2].params
+    expect(del.TableName).toBe('Votes-test')
+    expect(del.Key).toEqual({ id: db.calls[0].params.Item.id })
+  })
+  it('後始末の削除が失敗しても、元の失敗を throw する', async () => {
+    db.respond('put', (params) => {
+      if (params.TableName !== 'Comment-test') return {}
+      const e = new Error('nope'); e.name = 'X'; throw e
+    })
+    db.respond('delete', () => { throw new Error('delete failed') })
+    await expect(handler(event({ slug: 's', displayName: 'a', content: 'c' }))).rejects.toThrow('X:nope')
+  })
   it('DynamoDB が失敗したら name:message で throw する', async () => {
     db.respond('put', () => { const e = new Error('nope'); e.name = 'X'; throw e })
     await expect(handler(event({ slug: 's', displayName: 'a', content: 'c' }))).rejects.toThrow('X:nope')

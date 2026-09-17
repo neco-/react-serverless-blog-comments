@@ -1,7 +1,7 @@
 import React from 'react'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Comment } from './Comment'
+import { Comment, DELETE_ERROR_MESSAGE } from './Comment'
 import { renderWithClients, waitForAuth } from '../../test/render'
 import { FakeAuthClient } from '../../test/fakes'
 import { deleteComment } from '../../graphql/mutations'
@@ -71,6 +71,23 @@ describe('Comment', () => {
     await user.click(await screen.findByRole('button', { name: 'Delete' }))
     await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
     await waitFor(() => expect(apiClient.mutations).toEqual([{ query: deleteComment, variables: { input: { id: 'c1' } } }]))
+  })
+  it('削除が失敗したら理由を出す', async () => {
+    const user = userEvent.setup()
+    const { apiClient } = renderWithClients(<Comment comment={base} depth={0} />, { authClient: signedInAs('u1') })
+    apiClient.mutateError = { errors: [{ message: 'UserError: Comment not found.' }] }
+    await user.click(await screen.findByRole('button', { name: 'Delete' }))
+    await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
+    expect(await screen.findByText('Comment not found.')).toBeInTheDocument()
+  })
+  it('印の無い失敗は内部の文言を出さず、決まった文言にする', async () => {
+    const user = userEvent.setup()
+    const { apiClient } = renderWithClients(<Comment comment={base} depth={0} />, { authClient: signedInAs('u1') })
+    apiClient.mutateError = { errors: [{ message: 'ConditionalCheckFailedException:The conditional request failed' }] }
+    await user.click(await screen.findByRole('button', { name: 'Delete' }))
+    await user.click(screen.getByRole('button', { name: 'Confirm delete' }))
+    expect(await screen.findByText(DELETE_ERROR_MESSAGE)).toBeInTheDocument()
+    expect(screen.queryByText(/ConditionalCheckFailed/)).toBeNull()
   })
   it('Cancel を押すと何も送らず、縮む動きのあとに元の操作へ戻る', async () => {
     const user = userEvent.setup()

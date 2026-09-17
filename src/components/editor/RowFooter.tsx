@@ -22,6 +22,7 @@ import { CheckStoreData } from "./CheckStoreData"
 
 import { useApiClient } from '../../lib/clients'
 import { createComment, updateComment } from '../../graphql/mutations'
+import { errorMessage } from '../../lib/errorMessage'
 import { CreateCommentMutationVariables, UpdateCommentMutationVariables } from '../../API'
 
 import {
@@ -64,6 +65,10 @@ const OnLineImage = ({onClick}: {onClick: () => void}) => {
     </div>
   )
 }
+
+// 送信に失敗したが、理由を読者に見せられないときの文言。
+// Lambda が印を付けて返した理由があればそちらを出す（src/lib/errorMessage.ts）。
+export const SEND_ERROR_MESSAGE = "Failed to send. Please try again."
 
 export const RowFooter = ({
     inReplyTo = "",
@@ -115,8 +120,6 @@ export const RowFooter = ({
     }
     setValidationErrorMessage("")
 
-    // TODO: validate input
-
     if (isStored) {
       saveStoreData()
     } else {
@@ -138,7 +141,13 @@ export const RowFooter = ({
         if (siteURL) {
           createCommentInput['input']['siteurl'] = siteURL
         }
-        await apiClient.mutate(createComment, createCommentInput)
+        try {
+          await apiClient.mutate(createComment, createCommentInput)
+        } catch (err) {
+          // 失敗したら本文は消さない。書いたものを返さないまま閉じると、もう一度書き直しになる
+          setValidationErrorMessage(errorMessage(err, SEND_ERROR_MESSAGE))
+          return
+        }
         clearEditingComments(key)
         closeEditor()
       }
@@ -155,7 +164,12 @@ export const RowFooter = ({
         if (siteURL) {
           updateCommentInput['input']['siteurl'] = siteURL
         }
-        await apiClient.mutate(updateComment, updateCommentInput)
+        try {
+          await apiClient.mutate(updateComment, updateCommentInput)
+        } catch (err) {
+          setValidationErrorMessage(errorMessage(err, SEND_ERROR_MESSAGE))
+          return
+        }
         clearEditingComments(key)
         closeEditor()
       }

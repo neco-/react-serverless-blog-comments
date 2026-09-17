@@ -774,3 +774,11 @@
   width: 100%;
   height: 100%;
 }
+
+/* 削除に失敗した理由。操作の列の下に、列と同じ右端でそろえて出す */
+#blogcomments .bc-delete-error {
+  color: var(--bc-danger);
+  text-align: right;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}

@@ -7,6 +7,7 @@ import ButtonGroup from 'react-bootstrap/ButtonGroup'
 
 import { useApiClient } from '../../lib/clients'
 import { deleteComment } from '../../graphql/mutations'
+import { errorMessage } from '../../lib/errorMessage'
 import { DeleteCommentMutationVariables } from '../../API'
 
 import { PencilSquare, Link45deg, Trash } from 'react-bootstrap-icons'
@@ -23,12 +24,17 @@ import { useColorScheme } from "../../hooks/useColorScheme"
 import { useConfirmBand } from "../../hooks/useConfirmBand"
 import { CommentProps } from './CommentProps'
 
+// 削除に失敗したが、理由を読者に見せられないときの文言。
+// Lambda が印を付けて返した理由があればそちらを出す（src/lib/errorMessage.ts）。
+export const DELETE_ERROR_MESSAGE = "Failed to delete. Please try again."
+
 export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: number}) => {
   const { isAuthenticated, setIsOpenDialog, username } = useAuth()
   const colorScheme = useColorScheme()
   const apiClient = useApiClient()
   const [isOpenReplyEditor, setIsOpenReplyEditor] = useState<boolean>(false)
   const [isEditing, setIsEditing] = useState<boolean>(false)
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string>("")
   // 削除の確認は、ゴミ箱の位置から右へ伸びる帯で行う。閉じるときは逆向きに縮む
   const { isOpen: isConfirmOpen, open: openConfirm, close: closeConfirm, startClosing, bandProps, coveredProps } = useConfirmBand()
 
@@ -58,13 +64,20 @@ export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: num
   const handleDeleteComment = (id: string) => {
     closeConfirm()
     setIsEditing(false)
+    setDeleteErrorMessage("")
     const sendRequest = async () => {
       const deleteCommentInput: DeleteCommentMutationVariables = {
         input: {
           id
         }
       }
-      await apiClient.mutate(deleteComment, deleteCommentInput)
+      try {
+        await apiClient.mutate(deleteComment, deleteCommentInput)
+      } catch (err) {
+        // 成功すれば購読が消えた状態を運んでくるので、ここで出るのは失敗したときだけ。
+        // 何も出さないと、押したのに消えない理由が読者に分からない
+        setDeleteErrorMessage(errorMessage(err, DELETE_ERROR_MESSAGE))
+      }
     }
     sendRequest()
   }
@@ -99,7 +112,8 @@ export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: num
             <div className="bc-timestamp" style={{fontWeight:300}}>{timestamp} {edited}</div>
           </Row>
         </Col>
-        <Col style={{display:"flex", justifyContent:"right", alignSelf:"flex-start"}}>
+        {/* 操作の列と、その下に出る失敗の理由。縦に積むので右そろえは alignItems で行う */}
+        <Col style={{display:"flex", flexDirection:"column", alignItems:"flex-end", alignSelf:"flex-start"}}>
         <div className="bc-actions">
           {/* 通常の操作。確認中は帯の下に残るが、inert で押せなくする */}
           <div className="bc-actions-row" aria-label="Menu actions" {...coveredProps}>
@@ -131,6 +145,9 @@ export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: num
             </ButtonGroup>
           }
         </div>
+        {deleteErrorMessage &&
+          <div className="bc-delete-error">{deleteErrorMessage}</div>
+        }
         </Col>
       </Row>
       <Row>

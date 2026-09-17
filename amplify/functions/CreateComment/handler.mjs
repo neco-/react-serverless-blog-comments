@@ -1,6 +1,6 @@
 // AWS SDK v3（Gen2 のデプロイ時に esbuild がルートの devDependencies からバンドルする）
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
-import { DynamoDBDocumentClient, PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb"
+import { DynamoDBDocumentClient, PutCommand, GetCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb"
 const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}))
 
 import crypto from "node:crypto"
@@ -86,7 +86,14 @@ export const handler = async (event) => {
   try {
     await docClient.send(new PutCommand(params))
   } catch (err) {
-    // TODO: delete votes from DB
+    // Votes を先に書いているので、ここで止まると誰からも参照されない Votes が残る。
+    // 参照する Comment が無い以上あとから見つける手立ても無いので、この場で消す。
+    // 後始末の失敗で元の失敗を覆わない。呼び出し元が知るべきなのは投稿できなかったことのほう。
+    try {
+      await docClient.send(new DeleteCommand({ TableName: VOTES_TABLE, Key: { id: votesId } }))
+    } catch (cleanupErr) {
+      console.log(`CreateComment: votes cleanup failed id=${votesId} ${cleanupErr.name}`)
+    }
     throw new Error(err.name + ":" + err.message)
   }
 

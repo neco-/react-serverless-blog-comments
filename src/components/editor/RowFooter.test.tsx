@@ -6,6 +6,7 @@ import { renderWithClients } from '../../test/render'
 import { FakeAuthClient } from '../../test/fakes'
 import { createComment, updateComment } from '../../graphql/mutations'
 import { SIGN_IN_ERROR_MESSAGE } from '../../hooks/useAuth'
+import { SEND_ERROR_MESSAGE } from './RowFooter'
 
 const signedIn = () => { const c = new FakeAuthClient(); c.user = { username: 'u1', displayName: '' }; return c }
 const stored = (username: string, siteURL = '') =>
@@ -81,6 +82,36 @@ describe('RowFooter（ログイン済み）', () => {
       input: { content: 'hello **md**', displayName: 'alice', slug: 'post-1', siteurl: 'https://a.com' },
     })
     await waitFor(() => expect(closeEditor).toHaveBeenCalled())
+  })
+  it('投稿が失敗したら理由を出し、エディタを閉じない', async () => {
+    const user = userEvent.setup()
+    stored('alice')
+    draft('', 'hello')
+    const closeEditor = vi.fn()
+    const { apiClient } = renderWithClients(<RowFooter closeEditor={closeEditor} />, { authClient: signedIn() })
+    apiClient.mutateError = { errors: [{ message: 'UserError: content must be 10000 characters or less.' }] }
+    await user.click(await screen.findByText('Send'))
+    expect(await screen.findByText('content must be 10000 characters or less.')).toBeInTheDocument()
+    expect(closeEditor).not.toHaveBeenCalled()
+  })
+  it('印の無い失敗は内部の文言を出さず、決まった文言にする', async () => {
+    const user = userEvent.setup()
+    stored('alice')
+    draft('', 'hello')
+    const { apiClient } = renderWithClients(<RowFooter />, { authClient: signedIn() })
+    apiClient.mutateError = { errors: [{ message: 'ConditionalCheckFailedException:The conditional request failed' }] }
+    await user.click(await screen.findByText('Send'))
+    expect(await screen.findByText(SEND_ERROR_MESSAGE)).toBeInTheDocument()
+    expect(screen.queryByText(/ConditionalCheckFailed/)).toBeNull()
+  })
+  it('編集の失敗も同じ行に出す', async () => {
+    const user = userEvent.setup()
+    stored('alice')
+    draft('blogcomments_edit-c1', 'edited')
+    const { apiClient } = renderWithClients(<RowFooter editingCommentId="c1" />, { authClient: signedIn() })
+    apiClient.mutateError = { errors: [{ message: 'UserError: Comment not found.' }] }
+    await user.click(await screen.findByText('Send'))
+    expect(await screen.findByText('Comment not found.')).toBeInTheDocument()
   })
   it('返信は replyTo を付け、Cancel ボタンを出す', async () => {
     const user = userEvent.setup()

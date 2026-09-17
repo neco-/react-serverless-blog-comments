@@ -4,6 +4,7 @@ import { DynamoDBDocumentClient, GetCommand, UpdateCommand } from "@aws-sdk/lib-
 const docClient = DynamoDBDocumentClient.from(new DynamoDBClient({}))
 
 import { validateUpdateInput } from "../shared/validate.mjs"
+import { UserError } from "../shared/userError.mjs"
 
 const COMMENT_TABLE = process.env.API_BLOGCOMMENTS_COMMENTTABLE_NAME
 
@@ -39,7 +40,7 @@ export const handler = async (event) => {
     }
     // 存在しない場合と他人のものの場合で応答を変えない（存在を推測させないため）
     if (!item || item.userId !== userId) {
-      throw new Error("Comment not found.")
+      throw new UserError("Comment not found.")
     }
     return {
       ...item,
@@ -88,7 +89,11 @@ export const handler = async (event) => {
       },
     }
   } catch (err) {
-    // TODO: handle ConditionalCheckFailedException
+    // 条件は「本人のもの、かつ未削除」。ここを通ったということは、読み取ってから書くまでの間に
+    // 削除された。理由を分けて伝えても直せないので、存在を確かめる前と同じ応答にそろえる。
+    if (err.name === "ConditionalCheckFailedException") {
+      throw new UserError("Comment not found.")
+    }
     throw new Error(err.name + ":" + err.message)
   }
 }

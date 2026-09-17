@@ -37,9 +37,17 @@ describe('UpdateComment', () => {
     await handler(event({ id: 'c1', displayName: 'b', siteurl: 'https://b.com' }))
     expect(db.calls[0].params.UpdateExpression).toBe('set updatedAt = :updatedAt, displayName = :displayName, siteurl = :siteurl')
   })
-  it('失敗は name:message で throw', async () => {
+  it('途中で削除されていたら画面に出せる文言で失敗する', async () => {
     db.respond('update', () => { const e = new Error('cond'); e.name = 'ConditionalCheckFailedException'; throw e })
-    await expect(handler(event({ id: 'c1', content: 'x' }))).rejects.toThrow('ConditionalCheckFailedException:cond')
+    await expect(handler(event({ id: 'c1', content: 'x' }))).rejects.toThrow('UserError: Comment not found.')
+  })
+  it('それ以外の失敗は name:message で throw', async () => {
+    db.respond('update', () => { const e = new Error('boom'); e.name = 'X'; throw e })
+    await expect(handler(event({ id: 'c1', content: 'x' }))).rejects.toThrow('X:boom')
+  })
+  it('見つからない／他人のものは画面に出せる文言で失敗する', async () => {
+    db.respond('get', () => ({ Item: undefined }))
+    await expect(handler(event({ id: 'nope' }))).rejects.toThrow('UserError: Comment not found.')
   })
 })
 
