@@ -5,6 +5,7 @@ import { ClientsProvider } from '../lib/clients'
 import { FakeAuthClient, FakeApiClient } from '../test/fakes'
 import { navigateTo } from '../lib/navigation'
 import { reportOAuthFailure, oauthFailureMessage } from '../lib/oauthFailure'
+import { SIGNOUT_RETURN_KEY } from '../lib/signOutReturn'
 
 vi.mock('../lib/navigation', () => ({ navigateTo: vi.fn() }))
 
@@ -84,6 +85,19 @@ describe('useAuth', () => {
     const { result } = setup()
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(result.current.signInErrorMessage).toBe('')
+  })
+
+  it('サインアウトの前に戻り先の記事を預ける（離れたあとでは書けないため）', async () => {
+    window.history.pushState({}, '', '/post/why-agile/')
+    const c = new FakeAuthClient()
+    let seenAtCall: string | null = null
+    c.signOut = async () => { seenAtCall = sessionStorage.getItem(SIGNOUT_RETURN_KEY) }
+    const { result } = setup(c)
+
+    await act(async () => { await result.current.signOut() })
+
+    expect(JSON.parse(seenAtCall!).path).toBe('/post/why-agile/')
+    window.history.pushState({}, '', '/')
   })
   it('signIn はクライアントに username と password を渡す', async () => {
     const { result, authClient } = setup()

@@ -116,6 +116,44 @@ window.addEventListener("blogcomments:oauth-return-done", function () {
 | `exchange` | 認可コードをトークンに交換できなかった |
 | `no-flow` | 進行中のログインが無かった（交換済みの URL を開き直した、など） |
 
+## サインアウトの戻り先
+
+サインアウトも Cognito のログアウトを経由し、`redirect_sign_out_uri` に登録した URL
+（サイトのルートなど）へ戻ります。ログインと違って戻り先を URL に載せる手段がありません。
+`logout_uri` は登録済みの URL と完全一致である必要があり、`state` のような付随する値も
+渡せないためです。
+
+そこでウィジェットは、離れる前に戻り先を `sessionStorage` へ預けます。
+
+| | |
+| --- | --- |
+| キー | `blogcomment-signout-return` |
+| 値 | `{"path": "/post/xxx/", "at": 1758067200000}`（`at` は預けた時刻、epoch ミリ秒） |
+
+**着地するページでこれを読んで、元のページへ送り返してください。** 置いたままにしても
+実害はありませんが、読者はトップに取り残されます。
+
+```html
+<script>
+(function () {
+  var k = "blogcomment-signout-return", v
+  try { v = sessionStorage.getItem(k); sessionStorage.removeItem(k) } catch (e) { return }
+  if (!v) return
+  var r; try { r = JSON.parse(v) } catch (e) { return }
+  if (!r || typeof r.path != "string" || typeof r.at != "number") return
+  if (Date.now() - r.at > 120000) return
+  if (r.path.charAt(0) != "/" || r.path.charAt(1) == "/") return
+  location.replace(r.path)
+})()
+</script>
+```
+
+読んだら消すこと（往復しないため）、古い値は使わないこと（ログアウト画面で離脱したあと、
+同じタブで後からそのページを開いたときに行き先を乗っ取らないため）、`/` で始まり `//` で
+始まらないパスだけを使うこと（別サイトへ飛ばさないため）。`<head>` に置くと描画の前に
+離れるので、着地したページがちらつきません。`replace` を使うのは、戻るボタンで
+「元のページ ⇄ 着地ページ」を往復させないためです。
+
 ## 単に Web ページへ組み込む場合
 
 hugo でなくても、上の 3 つ（script / link / `<div id="blogcomments">`）を置くだけで動きます。

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useContext, createContext } from 'react'
 import { useAuthClient } from '../lib/clients'
 import { navigateTo } from '../lib/navigation'
 import { consumeOAuthFailure, oauthFailureMessage } from '../lib/oauthFailure'
+import { rememberSignOutReturn } from '../lib/signOutReturn'
 
 // ソーシャルログインは失敗しても画面が無反応になりやすいので、共通の文言で必ず知らせる
 export const SIGN_IN_ERROR_MESSAGE = "Sign in failed. Please try again."
@@ -199,6 +200,9 @@ const InternalAuth = (): IInternalAuth => {
 
   // Sign out
   const signOut = async () => {
+    // Cognito のログアウトはサイトのルートへ戻す。戻り先を URL に載せられないので、
+    // 離れる前に預けておき、着地したページに送り返してもらう
+    rememberSignOutReturn(window.location.pathname)
     await authClient.signOut()
   }
 
