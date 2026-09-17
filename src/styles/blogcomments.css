@@ -42,6 +42,8 @@
   --bc-primary-text: #0d6efd;
   --bc-focus-ring: rgba(13, 110, 253, 0.25);
   --bc-focus-border: #86b7fe;
+  /* 枠線ボタン（投票）の hover。投票済みの塗りつぶしと見分けがつく薄さにする */
+  --bc-primary-tint: rgba(13, 110, 253, 0.12);
   /* 主要色・成功色の上に載せる文字。どちらの地でも 4.5:1 を満たす */
   --bc-on-accent: #fff;
   --bc-border-subtle: rgba(0, 0, 0, 0.125);
@@ -86,6 +88,7 @@
   --bc-muted: #adb5bd;
   --bc-danger: #ea868f;
   --bc-primary-text: #6ea8fe;
+  --bc-primary-tint: rgba(110, 168, 254, 0.2);
   --bc-border-subtle: rgba(255, 255, 255, 0.15);
   --bc-border-strong: rgba(255, 255, 255, 0.2);
   --bc-check-border: rgba(255, 255, 255, 0.3);
@@ -106,6 +109,7 @@
   --bc-muted: #adb5bd;
   --bc-danger: #ea868f;
   --bc-primary-text: #6ea8fe;
+  --bc-primary-tint: rgba(110, 168, 254, 0.2);
   --bc-border-subtle: rgba(255, 255, 255, 0.15);
   --bc-border-strong: rgba(255, 255, 255, 0.2);
   --bc-check-border: rgba(255, 255, 255, 0.3);
@@ -420,12 +424,17 @@
   color: var(--bc-primary-text);
   border-color: var(--bc-primary-text);
 }
-#blogcomments .btn-outline-primary:hover,
 #blogcomments .btn-outline-primary.active,
 #blogcomments .btn-check:checked + .btn-outline-primary {
   color: var(--bc-on-accent);
   background-color: var(--bc-primary);
   border-color: var(--bc-primary);
+}
+/* hover は投票済み（塗りつぶし）と同じ見た目にしない。押していないのに投票したように見えるため。
+ * タッチ端末はタップした位置に hover が残る。削除の帯を Cancel で閉じると真下が投票ボタンなので、
+ * hover できる端末（マウス等）に限って出す */
+@media (hover: hover) {
+  #blogcomments .btn-outline-primary:hover { background-color: var(--bc-primary-tint); }
 }
 
 #blogcomments .btn-check {
