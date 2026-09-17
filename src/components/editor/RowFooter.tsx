@@ -210,9 +210,14 @@ export const RowFooter = ({
   if (isAuthenticated) {
     return (
       <Row className="footer">
-        <div className="mb-1" style={{display:"flex", alignItems:"end"}}>
+        {/* 操作の側は 1 行に保ち、詰まったらチェックボックスの文言を折り返す
+            （.bc-savedata に下限を置いてある）。下限を割るほど狭いときだけ、
+            最後の逃げ道として操作の側が次の行へ回る */}
+        <div className="mb-1" style={{display:"flex", alignItems:"end", flexWrap:"wrap"}}>
           <CheckStoreData />
-          <div className="mt-1" style={{display:"flex", justifyContent:"right", width:"inherit"}}>
+          {/* 操作の側は縮ませない。縮むと帯の幅も足りなくなり、Sign out の文字が切れる。
+              詰まったぶんは左のチェックボックス（文言が折り返る）が引き受ける */}
+          <div className="mt-1" style={{display:"flex", justifyContent:"right", flex:"0 0 auto", marginLeft:"auto"}}>
             {validationErrorMessage &&
               <div className="mb-1" style={{color:"var(--bc-danger)", display:"flex", alignItems:"end"}}>
                 {validationErrorMessage}

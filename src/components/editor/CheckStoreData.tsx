@@ -16,9 +16,9 @@ export const CheckStoreData = () => {
   }
 
   return (
-    <Form>
+    <Form className="bc-savedata">
       <Form.Check
-        style={{width:"max-content", fontWeight:500}}
+        style={{fontWeight:500}}
         type="checkbox"
         id="blogcomment-comment-form-checkbox-savedata"
         label="Save Name and Web"
