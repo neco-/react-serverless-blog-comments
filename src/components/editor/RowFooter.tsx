@@ -97,6 +97,13 @@ export const RowFooter = ({
   const [validationErrorMessage, setValidationErrorMessage] = useState<string>("")
 
   const isEditing = !!editingCommentId
+  // 返信・編集中は先頭が Cancel になり、確認の帯は出ない
+  const canSignOut = !(inReplyTo || isEditing)
+
+  // 確認の帯に出す中身。休止時の場所取り（.bc-actions-sizer）と同じものを使う。
+  // 文言が食い違うと確保する幅と帯の幅がずれるため、1 か所で持つ
+  const confirmSignOutLabel = <><BoxArrowRight /> Sign out</>
+  const confirmCancelLabel = "Cancel"
 
   useEffect(() => {
     if (isAuthenticated && username === "" && displayName !== "") {
@@ -187,6 +194,9 @@ export const RowFooter = ({
       Sign out
     </Tooltip>
   )
+  // 休止時はアイコンだけに畳む。Send を主たる導線として大きくしたので、
+  // 横に同じ大きさの文字付きボタンを並べると主従が消える。
+  // 文字は確認の帯（1 タップ目で開く）に出るので、触る側でも何のボタンかは分かる
   const SignOutButton = () => (
     <OverlayTrigger
       container={getWidgetRoot}
@@ -194,7 +204,7 @@ export const RowFooter = ({
       delay={{ show: 150, hide: 300 }}
       overlay={signOutTooltip}
     >
-      <Button variant="secondary" aria-label="SignOut" onClick={openConfirm}><BoxArrowRight style={{display:"flex", alignItems:"end"}} /></Button>
+      <Button variant="secondary" className="bc-signout" aria-label="SignOut" onClick={openConfirm}><BoxArrowRight style={{display:"flex", alignItems:"end"}} /></Button>
     </OverlayTrigger>
   )
   if (isAuthenticated) {
@@ -208,22 +218,31 @@ export const RowFooter = ({
                 {validationErrorMessage}
               </div>
             }
-            {/* ms-3 は帯の起点になる側に置く。先頭のボタンに付けると、その分だけ
-                帯が左へはみ出して何も無いところから伸びて見える */}
-            <div className="bc-actions ms-3">
+            {/* ms-3 はチェックボックスとの間。帯の起点になる側（先頭のボタン）に
+                付けると、その分だけ帯が左へはみ出して何も無いところから伸びて見える */}
+            <div className="bc-actions bc-actions-footer ms-3">
+              {/* 休止時はアイコンだけに畳むが、帯が要る幅（Sign out と Cancel の半々）は
+                  いつも確保しておく。畳んだ分だけ幅が縮むと、帯がその外へはみ出して
+                  伸び始めがアイコンの左端とずれる。見えない同じ中身で幅だけ決めさせる */}
+              {canSignOut &&
+                <div className="bc-actions-sizer" aria-hidden="true" inert>
+                  <span className="btn">{confirmSignOutLabel}</span>
+                  <span className="btn">{confirmCancelLabel}</span>
+                </div>
+              }
               {/* 通常の操作。確認中は帯の下に残るが、inert で押せなくする */}
               <div className="bc-actions-row" aria-label="Footer actions" {...coveredProps}>
-                {(inReplyTo || isEditing)
-                  ? <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
-                  : <SignOutButton />}
-                <Button className="ms-3" onClick={handleSend}><SendFill /> Send</Button>
+                {canSignOut
+                  ? <SignOutButton />
+                  : <Button variant="secondary" onClick={handleCancel}>Cancel</Button>}
+                <Button className="bc-send" onClick={handleSend}><SendFill /> Send</Button>
               </div>
               {/* ログアウトも押し直しが効かないので、アイコンの 1 タップでは実行せず
                   その場で確定を求める。帯はアイコンの位置から右へ伸びて Send を覆う */}
               {isConfirmOpen &&
                 <ButtonGroup {...bandProps('bc-confirm-signout')} aria-label="Menu confirm signout">
-                  <Button variant="danger" className="bc-confirm-to-danger" aria-label="Confirm sign out" onClick={signOut}><BoxArrowRight /> Sign out</Button>
-                  <Button variant="secondary" aria-label="Cancel sign out" autoFocus onClick={startClosing}>Cancel</Button>
+                  <Button variant="danger" className="bc-confirm-to-danger" aria-label="Confirm sign out" onClick={signOut}>{confirmSignOutLabel}</Button>
+                  <Button variant="secondary" aria-label="Cancel sign out" autoFocus onClick={startClosing}>{confirmCancelLabel}</Button>
                 </ButtonGroup>
               }
             </div>

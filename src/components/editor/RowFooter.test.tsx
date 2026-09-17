@@ -179,11 +179,27 @@ describe('RowFooter（ログイン済み）', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Confirm sign out' })).toBeNull())
     expect(authClient.calls.some((c) => c.method === 'signOut')).toBe(false)
   })
+  // 休止時はアイコンだけに畳むが、帯は「アイコンの左端から Send の右端まで」で
+  // 開いて中を半々にする。そのためには畳んでいる間も帯と同じ幅が要るので、
+  // 同じ文言の見えない控えで場所を取っている。これを消すと帯が左へはみ出す
+  it('休止時も帯の幅を確保する控えを、支援技術から隠して置く', async () => {
+    const { container } = renderWithClients(<RowFooter />, { authClient: signedIn() })
+    await screen.findByLabelText('SignOut')
+    const sizer = container.querySelector('.bc-actions-sizer')
+    expect(sizer).toHaveAttribute('aria-hidden', 'true')
+    expect(sizer).toHaveTextContent('Sign out')
+    expect(sizer).toHaveTextContent('Cancel')
+    // 控えは読み上げにも操作にも出ない。押せるのは帯を開いたあとの 2 つだけ
+    expect(screen.queryByRole('button', { name: 'Confirm sign out' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Cancel sign out' })).toBeNull()
+  })
   // 返信・編集中は SignOut ではなく Cancel が出る。確認の帯もそこには要らない
   it('返信中はログアウトの確認を出さない', async () => {
     stored('alice')
-    renderWithClients(<RowFooter inReplyTo="c-parent" />, { authClient: signedIn() })
+    const { container } = renderWithClients(<RowFooter inReplyTo="c-parent" />, { authClient: signedIn() })
     expect(await screen.findByText('Cancel')).toBeInTheDocument()
     expect(screen.queryByLabelText('SignOut')).toBeNull()
+    // 帯が出ないので幅を確保する控えも要らない（Cancel と Send がそのまま並ぶ）
+    expect(container.querySelector('.bc-actions-sizer')).toBeNull()
   })
 })

@@ -686,18 +686,50 @@
   to   { opacity: 0; }
 }
 
-/* ログアウトの帯は「Sign out」「Cancel」の 2 語が入る幅が要る。覆う相手が
- * アイコン + Send しか無く、幅をそのまま借りると clip-path で文字が切れるので、
- * 右端だけ合わせて内容の分だけ左へ伸ばす。grid にすると 1fr が広いほうの語に
- * 揃うので、flex の flex-basis:0 と違って 2 つが同じ幅になる */
-#blogcomments .bc-confirm-signout {
-  left: auto;
-  right: 0;
-  width: max-content;
+/* ログアウトの帯も削除と同じく、覆う相手（Sign out + Send）の幅ちょうどに収める
+ * （.bc-confirm の inset: 0）。以前は 2 語を入れるために右端だけ合わせて左へ
+ * はみ出させていたが、伸び始めがボタンの左端とずれ、何も無いところから生えて
+ * 見えた。狭い画面では隣のチェックボックスにも被っていた。
+ * 休止時はアイコンだけに畳んであるが、幅は下の .bc-actions-sizer で確保してある。
+ * Sign out と Cancel は削除の帯と同じく半々（.bc-confirm > .btn の flex: 1 1 0）。
+ * min-width: 0 は保険で、ホストの字が想定より広くても Cancel を帯の外へ
+ * 押し出さず、確定の側の文字が詰まるだけにする */
+#blogcomments .bc-confirm-signout .bc-confirm-to-danger { min-width: 0; }
+
+/* Send は投稿の導線なので、副であるログアウトより大きく見せる。
+ * margin-left は間隔の下限（space-between で空きが 0 になったときも詰まらせない） */
+#blogcomments .bc-actions-row .bc-send {
+  margin-left: 1em;
+  padding-inline: 1.5em;
+}
+
+/* 畳んだログアウトは padding で面積を稼ぐ（42 → 66px）。帯のために確保している幅は
+ * 変わらないので、その分だけ Send との間の空きが詰まる（60 → 36px）。
+ * 「Out」などの短い語を入れても同じだけ詰まるが、語が短いと意味が抜けるので絵のまま。
+ * ここは 1 タップ目に開く帯とツールチップが正体を説明する作りになっている。
+ * 併せて指で狙える面も広がる。padding は Send と同じ 1.5em（em なので字の大きさに追従） */
+#blogcomments .bc-actions-row .bc-signout { padding-inline: 1.5em; }
+
+/* 休止時のログアウトはアイコンだけに畳む。それでも帯は「アイコンの左端から
+ * Send の右端まで」で開き、中を Sign out と Cancel の半々にする。
+ * つまり畳んでも帯の幅（= 半々に必要な幅）を確保し続ける必要がある。
+ * em で「これくらい」と当て推量を置くと埋め込み先の字で崩れるので、帯と同じ中身を
+ * 見えない形で 1 つのマスに重ね、幅だけをそれに決めさせる（.bc-actions-sizer）。
+ * grid の 1fr は max-content でも広い方に揃うので、これが「半々ぶん」になる。
+ * flex: 0 0 auto は、確保した幅を縮ませないため（縮むと半々が崩れて文字が切れる） */
+#blogcomments .bc-actions-footer { display: inline-grid; flex: 0 0 auto; }
+#blogcomments .bc-actions-footer > * { grid-area: 1 / 1; }
+#blogcomments .bc-actions-sizer {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
+  /* 高さは通常のボタン列に持たせる。場所取りは幅だけ */
+  height: 0;
+  visibility: hidden;
 }
+#blogcomments .bc-actions-sizer > .btn { white-space: nowrap; }
+/* 畳んだアイコンは左端、Send は右端。空く間が、帯が開いていく場所になる */
+#blogcomments .bc-actions-footer .bc-actions-row { justify-content: space-between; }
 
 /* ログアウトの確定だけは、休止時のアイコンがグレーなので、帯が開くのに合わせて
  * グレーから赤へ変わる。footer では Send の青の隣に並ぶため、常時赤を置くと
