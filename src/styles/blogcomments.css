@@ -643,13 +643,13 @@
   border-radius: 0.25em;
 }
 
-/* ---- コメントの操作と、削除の確認の帯 ----
+/* ---- 取り消せない操作の確認の帯（削除・ログアウト）----
  * 通常のボタン列（.bc-actions-row）はそのまま残し、その上に確認の帯を重ねる。
- * 帯はゴミ箱（左端）の位置から右へ開いて他のボタンを覆い、Cancel で逆向きに閉じる。
+ * 帯は起点のボタン（左端）の位置から右へ開いて隣のボタンを覆い、Cancel で逆向きに閉じる。
  * clip-path で「めくる」ので、伸びている途中でもボタンの寸法は最終形のまま */
 #blogcomments .bc-actions { position: relative; display: inline-flex; }
 #blogcomments .bc-actions-row { display: inline-flex; }
-#blogcomments .bc-confirm-delete {
+#blogcomments .bc-confirm {
   position: absolute;
   inset: 0;
   display: flex;
@@ -657,9 +657,9 @@
 }
 /* 戻りも開くときと同じ曲線にする。ease-in だと最初の 1/3 がほとんど動かず、
  * 押しても止まって見えてから消える */
-#blogcomments .bc-confirm-delete.bc-closing { animation: bc-confirm-shrink 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
+#blogcomments .bc-confirm.bc-closing { animation: bc-confirm-shrink 0.3s cubic-bezier(0.4, 0, 0.2, 1) both; }
 /* Delete と Cancel は同じ幅 */
-#blogcomments .bc-confirm-delete > .btn { flex: 1 1 0; white-space: nowrap; }
+#blogcomments .bc-confirm > .btn { flex: 1 1 0; white-space: nowrap; }
 @keyframes bc-confirm-grow {
   from { clip-path: inset(0 100% 0 0); }
   to   { clip-path: inset(0 0 0 0); }
@@ -673,8 +673,8 @@
  * 当てにならず、閉じる処理が JS 側の保険のタイマー待ちになって
  * 「少し間があってから一瞬で消える」見え方になっていた */
 @media (prefers-reduced-motion: reduce) {
-  #blogcomments .bc-confirm-delete { animation: bc-confirm-fade-in 0.15s ease-out both; }
-  #blogcomments .bc-confirm-delete.bc-closing { animation: bc-confirm-fade-out 0.15s ease-in both; }
+  #blogcomments .bc-confirm { animation: bc-confirm-fade-in 0.15s ease-out both; }
+  #blogcomments .bc-confirm.bc-closing { animation: bc-confirm-fade-out 0.15s ease-in both; }
 }
 @keyframes bc-confirm-fade-in {
   from { opacity: 0; }
@@ -683,6 +683,42 @@
 @keyframes bc-confirm-fade-out {
   from { opacity: 1; }
   to   { opacity: 0; }
+}
+
+/* ログアウトの帯は「Sign out」「Cancel」の 2 語が入る幅が要る。覆う相手が
+ * アイコン + Send しか無く、幅をそのまま借りると clip-path で文字が切れるので、
+ * 右端だけ合わせて内容の分だけ左へ伸ばす。grid にすると 1fr が広いほうの語に
+ * 揃うので、flex の flex-basis:0 と違って 2 つが同じ幅になる */
+#blogcomments .bc-confirm-signout {
+  left: auto;
+  right: 0;
+  width: max-content;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+
+/* ログアウトの確定だけは、休止時のアイコンがグレーなので、帯が開くのに合わせて
+ * グレーから赤へ変わる。footer では Send の青の隣に並ぶため、常時赤を置くと
+ * 投稿の導線より先に目に入ってしまう。
+ * fill-mode を付けないので、終わったあとは .btn-danger の色に戻り hover が効く */
+#blogcomments .bc-confirm-signout .bc-confirm-to-danger {
+  animation: bc-confirm-to-danger 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes bc-confirm-to-danger {
+  from {
+    background-color: var(--bc-surface-secondary);
+    border-color: var(--bc-surface-secondary);
+  }
+  to {
+    background-color: var(--bc-danger-bg);
+    border-color: var(--bc-danger-bg);
+  }
+}
+/* 色の変化は位置の動きではないので、動きを減らす設定でも残す。
+ * ただし帯の出入りが 0.15s になるので、そちらに合わせる */
+@media (prefers-reduced-motion: reduce) {
+  #blogcomments .bc-confirm-signout .bc-confirm-to-danger { animation-duration: 0.15s; }
 }
 
 /* 日時は折り返さない。狭い幅では日付と時刻が 2 行に割れるより、

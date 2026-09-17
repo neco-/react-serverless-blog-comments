@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect, useRef } from 'react'
+import React, { memo, useState, useEffect } from 'react'
 
 import Row from "react-bootstrap/Row"
 import Col from "react-bootstrap/Col"
@@ -20,10 +20,8 @@ import rehypeSanitize from "rehype-sanitize"
 
 import { useAuth } from "../../hooks/useAuth"
 import { useColorScheme } from "../../hooks/useColorScheme"
+import { useConfirmBand } from "../../hooks/useConfirmBand"
 import { CommentProps } from './CommentProps'
-
-// 確認の帯が伸び縮みする時間。CSS の bc-confirm-grow / bc-confirm-shrink と揃える
-export const CONFIRM_ANIMATION_MS = 300
 
 export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: number}) => {
   const { isAuthenticated, setIsOpenDialog, username } = useAuth()
@@ -32,18 +30,7 @@ export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: num
   const [isOpenReplyEditor, setIsOpenReplyEditor] = useState<boolean>(false)
   const [isEditing, setIsEditing] = useState<boolean>(false)
   // 削除の確認は、ゴミ箱の位置から右へ伸びる帯で行う。閉じるときは逆向きに縮む
-  const [confirmPhase, setConfirmPhase] = useState<'closed' | 'open' | 'closing'>('closed')
-  const closeTimer = useRef<number | undefined>(undefined)
-  const finishClosing = () => {
-    window.clearTimeout(closeTimer.current)
-    setConfirmPhase('closed')
-  }
-  const startClosing = () => {
-    setConfirmPhase('closing')
-    // animationend が来ない環境（動きを減らす設定、テスト）でも必ず閉じる
-    closeTimer.current = window.setTimeout(finishClosing, CONFIRM_ANIMATION_MS + 50)
-  }
-  useEffect(() => () => window.clearTimeout(closeTimer.current), [])
+  const { isOpen: isConfirmOpen, open: openConfirm, close: closeConfirm, startClosing, bandProps, coveredProps } = useConfirmBand()
 
   useEffect(() => {
     setIsOpenReplyEditor(false)
@@ -69,7 +56,7 @@ export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: num
   }
 
   const handleDeleteComment = (id: string) => {
-    finishClosing()
+    closeConfirm()
     setIsEditing(false)
     const sendRequest = async () => {
       const deleteCommentInput: DeleteCommentMutationVariables = {
@@ -115,10 +102,10 @@ export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: num
         <Col style={{display:"flex", justifyContent:"right", alignSelf:"flex-start"}}>
         <div className="bc-actions">
           {/* 通常の操作。確認中は帯の下に残るが、inert で押せなくする */}
-          <div className="bc-actions-row" aria-label="Menu actions" inert={confirmPhase !== 'closed' || undefined}>
+          <div className="bc-actions-row" aria-label="Menu actions" {...coveredProps}>
             {isEditable &&
               <ButtonGroup className="me-2" aria-label="Menu delete">
-                <Button variant="danger" size="sm" aria-label="Delete" onClick={() => setConfirmPhase('open')}><Trash /></Button>
+                <Button variant="danger" size="sm" aria-label="Delete" onClick={openConfirm}><Trash /></Button>
               </ButtonGroup>
             }
             {isEditable &&
@@ -137,16 +124,8 @@ export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: num
           </div>
           {/* 削除は復元できないので、ゴミ箱の 1 タップでは消さず、その場で確定を求める。
               帯はゴミ箱の左端から右へ伸びて他のボタンを覆い、Delete と Cancel を同じ幅で出す */}
-          {confirmPhase !== 'closed' &&
-            <ButtonGroup
-              className={"bc-confirm-delete" + (confirmPhase === 'closing' ? " bc-closing" : "")}
-              aria-label="Menu confirm delete"
-              // 閉じている途中は押せなくする。disabled だと .btn:disabled の opacity で
-              // 帯が透けて下のボタンが見えるので、見た目を変えない inert を使う
-              inert={confirmPhase === 'closing' || undefined}
-              onAnimationEnd={() => { if (confirmPhase === 'closing') finishClosing() }}
-              onKeyDown={(e) => { if (e.key === 'Escape') startClosing() }}
-            >
+          {isConfirmOpen &&
+            <ButtonGroup {...bandProps('bc-confirm-delete')} aria-label="Menu confirm delete">
               <Button variant="danger" size="sm" aria-label="Confirm delete" onClick={() => handleDeleteComment(comment.id)}><Trash /> Delete</Button>
               <Button variant="secondary" size="sm" aria-label="Cancel delete" autoFocus onClick={startClosing}>Cancel</Button>
             </ButtonGroup>

@@ -111,10 +111,48 @@ describe('RowFooter（ログイン済み）', () => {
     expect(screen.queryByText('Name is empty.')).toBeNull()
     expect(screen.getByText('comment is empty.')).toBeInTheDocument()
   })
-  it('サインアウトボタンで signOut を呼ぶ', async () => {
+  // ログアウトも押し直しが効かない操作なので、削除と同じく 1 タップでは実行せず、
+  // その場で確定を求める。確認の帯はアイコンの位置から右へ伸びて Send を覆う
+  it('ログアウトのアイコンを押しただけでは呼ばず、Sign out と Cancel が出て Send は inert になる', async () => {
     const user = userEvent.setup()
     const { authClient } = renderWithClients(<RowFooter />, { authClient: signedIn() })
     await user.click(await screen.findByLabelText('SignOut'))
+    expect(authClient.calls.some((c) => c.method === 'signOut')).toBe(false)
+    expect(screen.getByRole('button', { name: 'Confirm sign out' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cancel sign out' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Footer actions')).toHaveAttribute('inert')
+  })
+  it('確定を押すと signOut を呼ぶ', async () => {
+    const user = userEvent.setup()
+    const { authClient } = renderWithClients(<RowFooter />, { authClient: signedIn() })
+    await user.click(await screen.findByLabelText('SignOut'))
+    await user.click(screen.getByRole('button', { name: 'Confirm sign out' }))
     await waitFor(() => expect(authClient.calls.some((c) => c.method === 'signOut')).toBe(true))
+  })
+  it('Cancel を押すと呼ばず、縮む動きのあとに元のアイコンへ戻る', async () => {
+    const user = userEvent.setup()
+    const { authClient } = renderWithClients(<RowFooter />, { authClient: signedIn() })
+    await user.click(await screen.findByLabelText('SignOut'))
+    await user.click(screen.getByRole('button', { name: 'Cancel sign out' }))
+    // 縮むアニメーションの間は帯が残る（jsdom は animationend を出さないので時間切れで閉じる）
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Confirm sign out' })).toBeNull())
+    expect(authClient.calls.some((c) => c.method === 'signOut')).toBe(false)
+    expect(screen.getByLabelText('Footer actions')).not.toHaveAttribute('inert')
+    expect(screen.getByLabelText('SignOut')).toBeInTheDocument()
+  })
+  it('Escape でも Cancel と同じように戻る', async () => {
+    const user = userEvent.setup()
+    const { authClient } = renderWithClients(<RowFooter />, { authClient: signedIn() })
+    await user.click(await screen.findByLabelText('SignOut'))
+    await user.keyboard('{Escape}')
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Confirm sign out' })).toBeNull())
+    expect(authClient.calls.some((c) => c.method === 'signOut')).toBe(false)
+  })
+  // 返信・編集中は SignOut ではなく Cancel が出る。確認の帯もそこには要らない
+  it('返信中はログアウトの確認を出さない', async () => {
+    stored('alice')
+    renderWithClients(<RowFooter inReplyTo="c-parent" />, { authClient: signedIn() })
+    expect(await screen.findByText('Cancel')).toBeInTheDocument()
+    expect(screen.queryByLabelText('SignOut')).toBeNull()
   })
 })

@@ -5,6 +5,7 @@ import Row from "react-bootstrap/Row"
 import Col from "react-bootstrap/Col"
 import Image from "react-bootstrap/Image"
 import Button from "react-bootstrap/Button"
+import ButtonGroup from "react-bootstrap/ButtonGroup"
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger'
 import Tooltip from 'react-bootstrap/Tooltip'
 
@@ -33,6 +34,7 @@ import { useAuth } from "../../hooks/useAuth"
 import { useStoreData } from "../../hooks/useStoreData"
 import { useSlug } from "../../hooks/useSlug"
 import { useSignInGoogleModal } from "../../hooks/useSignInGoogleModal"
+import { useConfirmBand } from "../../hooks/useConfirmBand"
 
 import lineSignIn from '../../images/line_login.png'
 import lineSignInHover from '../../images/line_login_hover.png'
@@ -77,6 +79,9 @@ export const RowFooter = ({
   const { slug } = useSlug()
   const { SignInGoogleModal, openSignInGoogleModal } = useSignInGoogleModal()
   const apiClient = useApiClient()
+
+  // ログアウトの確認は、アイコンの位置から右へ伸びる帯で行う（削除と同じ仕掛け）
+  const { isOpen: isConfirmOpen, open: openConfirm, startClosing, bandProps, coveredProps } = useConfirmBand()
 
   const [isOpenWhyModal, setIsOpenWhyModal] = useState<boolean>(false)
   const handleCloseWhySignInModal = () => setIsOpenWhyModal(false)
@@ -175,7 +180,7 @@ export const RowFooter = ({
       delay={{ show: 150, hide: 300 }}
       overlay={signOutTooltip}
     >
-      <Button className="ms-3" variant="secondary" aria-label="SignOut" onClick={signOut}><BoxArrowRight style={{display:"flex", alignItems:"end"}} /></Button>
+      <Button variant="secondary" aria-label="SignOut" onClick={openConfirm}><BoxArrowRight style={{display:"flex", alignItems:"end"}} /></Button>
     </OverlayTrigger>
   )
   if (isAuthenticated) {
@@ -189,10 +194,25 @@ export const RowFooter = ({
                 {validationErrorMessage}
               </div>
             }
-            {(inReplyTo || isEditing)
-              ? <Button className="ms-3" variant="secondary" onClick={handleCancel}>Cancel</Button>
-              : <SignOutButton />}
-            <Button className="ms-3" onClick={handleSend}><SendFill /> Send</Button>
+            {/* ms-3 は帯の起点になる側に置く。先頭のボタンに付けると、その分だけ
+                帯が左へはみ出して何も無いところから伸びて見える */}
+            <div className="bc-actions ms-3">
+              {/* 通常の操作。確認中は帯の下に残るが、inert で押せなくする */}
+              <div className="bc-actions-row" aria-label="Footer actions" {...coveredProps}>
+                {(inReplyTo || isEditing)
+                  ? <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
+                  : <SignOutButton />}
+                <Button className="ms-3" onClick={handleSend}><SendFill /> Send</Button>
+              </div>
+              {/* ログアウトも押し直しが効かないので、アイコンの 1 タップでは実行せず
+                  その場で確定を求める。帯はアイコンの位置から右へ伸びて Send を覆う */}
+              {isConfirmOpen &&
+                <ButtonGroup {...bandProps('bc-confirm-signout')} aria-label="Menu confirm signout">
+                  <Button variant="danger" className="bc-confirm-to-danger" aria-label="Confirm sign out" onClick={signOut}><BoxArrowRight /> Sign out</Button>
+                  <Button variant="secondary" aria-label="Cancel sign out" autoFocus onClick={startClosing}>Cancel</Button>
+                </ButtonGroup>
+              }
+            </div>
           </div>
         </div>
       </Row>
