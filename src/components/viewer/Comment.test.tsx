@@ -30,12 +30,12 @@ describe('Comment', () => {
     const authClient = signedInAs('u2')
     renderWithClients(<Comment comment={base} depth={0} />, { authClient })
     await waitForAuth(true)
-    expect(screen.getByText('reply')).toBeInTheDocument()
+    expect(screen.getByText('Reply')).toBeInTheDocument()
     expect(screen.queryByLabelText('Menu edit')).toBeNull()
   })
-  it('深さ 2 では reply ボタンが出ない', () => {
+  it('深さ 2 では Reply ボタンが出ない', () => {
     renderWithClients(<Comment comment={base} depth={2} />)
-    expect(screen.queryByText('reply')).toBeNull()
+    expect(screen.queryByText('Reply')).toBeNull()
   })
   it('updatedAt が createdAt と違えば (edited) を出す', () => {
     renderWithClients(<Comment comment={{ ...base, updatedAt: '2024-01-02T00:00:00Z' }} depth={0} />)
@@ -48,11 +48,29 @@ describe('Comment', () => {
     await waitForAuth(true)
     expect(screen.queryByLabelText('Menu edit')).toBeNull()
   })
-  it('操作の並びは 削除 → 編集 → reply → 投票（削除が左端）', async () => {
+  it('操作の並びは 削除 → 編集 → Reply → 投票（削除が左端）', async () => {
     renderWithClients(<Comment comment={base} depth={0} />, { authClient: signedInAs('u1') })
     const row = await screen.findByLabelText('Menu actions')
     const groups = Array.from(row.querySelectorAll('[aria-label^="Menu "]')).map((g) => g.getAttribute('aria-label'))
     expect(groups).toEqual(['Menu delete', 'Menu edit', 'Menu reply', 'Menu votes'])
+  })
+  // 削除と編集はアイコンだけなので、読み上げ名と、重ねたときの文言で何のボタンか分かるようにする。
+  // Reply は文字が出ているので付けない
+  it('編集ボタンの読み上げ名は Edit', async () => {
+    renderWithClients(<Comment comment={base} depth={0} />, { authClient: signedInAs('u1') })
+    expect(await screen.findByRole('button', { name: 'Edit' })).toBeInTheDocument()
+  })
+  it('ゴミ箱に重ねると Delete のツールチップが出る', async () => {
+    const user = userEvent.setup()
+    renderWithClients(<Comment comment={base} depth={0} />, { authClient: signedInAs('u1') })
+    await user.hover(await screen.findByRole('button', { name: 'Delete' }))
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Delete')
+  })
+  it('鉛筆に重ねると Edit のツールチップが出る', async () => {
+    const user = userEvent.setup()
+    renderWithClients(<Comment comment={base} depth={0} />, { authClient: signedInAs('u1') })
+    await user.hover(await screen.findByRole('button', { name: 'Edit' }))
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Edit')
   })
   // 削除は復元できないので、ゴミ箱の 1 タップでは消さず、その場で確定を求める。
   // 確認の帯はゴミ箱の位置から右へ伸びて他のボタンを覆う。下のボタン列は残るが操作できない

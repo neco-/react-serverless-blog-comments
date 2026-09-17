@@ -4,6 +4,8 @@ import Row from "react-bootstrap/Row"
 import Col from "react-bootstrap/Col"
 import Button from 'react-bootstrap/Button'
 import ButtonGroup from 'react-bootstrap/ButtonGroup'
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger'
+import Tooltip from 'react-bootstrap/Tooltip'
 
 import { useApiClient } from '../../lib/clients'
 import { deleteComment } from '../../graphql/mutations'
@@ -23,10 +25,24 @@ import { useAuth } from "../../hooks/useAuth"
 import { useColorScheme } from "../../hooks/useColorScheme"
 import { useConfirmBand } from "../../hooks/useConfirmBand"
 import { CommentProps } from './CommentProps'
+import { getWidgetRoot } from '../../lib/widgetRoot'
 
 // 削除に失敗したが、理由を読者に見せられないときの文言。
 // Lambda が印を付けて返した理由があればそちらを出す（src/lib/errorMessage.ts）。
 export const DELETE_ERROR_MESSAGE = "Failed to delete. Please try again."
+
+// 削除と編集はアイコンだけなので、重ねたときに何のボタンかを文言で出す。
+// Reply は文字が出ているので付けない。描画先とためは VoteHeart / RowFooter と揃える
+const ActionTooltip = ({label, children}:{label: string, children: React.ReactElement}) => (
+  <OverlayTrigger
+    container={getWidgetRoot}
+    placement="top"
+    delay={{ show: 150, hide: 300 }}
+    overlay={(props: any) => <Tooltip {...props}>{label}</Tooltip>}
+  >
+    {children}
+  </OverlayTrigger>
+)
 
 export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: number}) => {
   const { isAuthenticated, setIsOpenDialog, username } = useAuth()
@@ -119,17 +135,21 @@ export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: num
           <div className="bc-actions-row" aria-label="Menu actions" {...coveredProps}>
             {isEditable &&
               <ButtonGroup className="me-2" aria-label="Menu delete">
-                <Button variant="danger" size="sm" aria-label="Delete" onClick={openConfirm}><Trash /></Button>
+                <ActionTooltip label="Delete">
+                  <Button variant="danger" size="sm" aria-label="Delete" onClick={openConfirm}><Trash /></Button>
+                </ActionTooltip>
               </ButtonGroup>
             }
             {isEditable &&
               <ButtonGroup className="me-2" aria-label="Menu edit">
-                <Button variant="success" size="sm" onClick={() => handleOpenEdit()}><PencilSquare /></Button>
+                <ActionTooltip label="Edit">
+                  <Button variant="success" size="sm" aria-label="Edit" onClick={() => handleOpenEdit()}><PencilSquare /></Button>
+                </ActionTooltip>
               </ButtonGroup>
             }
             {depth < 2 &&
               <ButtonGroup className="me-2" aria-label="Menu reply">
-                <Button variant="success" size="sm" onClick={handleOpenReply}>reply</Button>
+                <Button variant="success" size="sm" onClick={handleOpenReply}>Reply</Button>
               </ButtonGroup>
             }
             <ButtonGroup aria-label="Menu votes">
