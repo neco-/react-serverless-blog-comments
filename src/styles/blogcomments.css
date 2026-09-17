@@ -248,20 +248,21 @@
 #blogcomments .form-control:disabled { background-color: var(--bc-bg-subtle); opacity: 1; }
 
 /* ラベルも押せるので幅は足りるが、行の高さが 16px しかなかった。
- * 行に高さを持たせ、指で狙える縦幅にする（見た目の位置は変わらない） */
+ * 行に高さを持たせ、指で狙える縦幅にする。
+ * flex にしたので Bootstrap の「padding-left 1.5em + input を float して
+ * margin-left -1.5em で戻す」組みは効かない（flex の子では float を無視する）。
+ * その取り分が消えてチェックボックスと文字がくっついていたので、gap で持ち直す */
 #blogcomments .form-check {
   display: flex;
   align-items: center;
+  gap: 0.5em;
   min-height: 2rem;
-  padding-left: 1.5em;
   margin-bottom: 0.125rem;
 }
 #blogcomments .form-check-input {
-  float: left;
+  flex: 0 0 auto;
   width: 1em;
   height: 1em;
-  margin-top: 0.25em;
-  margin-left: -1.5em;
   vertical-align: top;
   appearance: none;
   background-color: var(--bc-bg);
@@ -731,7 +732,6 @@
 #blogcomments .bc-why-signin {
   display: inline-flex;
   align-items: center;
-  gap: 0.25em;
   min-height: 44px;
   padding: 0 0.25em;
   margin: 0;
@@ -742,6 +742,9 @@
   font-weight: 500;
   cursor: pointer;
 }
+/* 空きはアイコンの前だけ。gap にすると後ろに続く「:」も離れ、
+ * 「comment with ? :」と読めてしまう */
+#blogcomments .bc-why-signin svg { margin-left: 0.25em; }
 #blogcomments .bc-why-signin:hover svg { color: var(--bc-primary); }
 #blogcomments .bc-why-signin:focus-visible {
   outline: 2px solid var(--bc-focus-border);
