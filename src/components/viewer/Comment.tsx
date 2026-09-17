@@ -141,11 +141,14 @@ export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: num
             <ButtonGroup
               className={"bc-confirm-delete" + (confirmPhase === 'closing' ? " bc-closing" : "")}
               aria-label="Menu confirm delete"
+              // 閉じている途中は押せなくする。disabled だと .btn:disabled の opacity で
+              // 帯が透けて下のボタンが見えるので、見た目を変えない inert を使う
+              inert={confirmPhase === 'closing' || undefined}
               onAnimationEnd={() => { if (confirmPhase === 'closing') finishClosing() }}
               onKeyDown={(e) => { if (e.key === 'Escape') startClosing() }}
             >
-              <Button variant="danger" size="sm" aria-label="Confirm delete" disabled={confirmPhase === 'closing'} onClick={() => handleDeleteComment(comment.id)}><Trash /> Delete</Button>
-              <Button variant="secondary" size="sm" aria-label="Cancel delete" autoFocus disabled={confirmPhase === 'closing'} onClick={startClosing}>Cancel</Button>
+              <Button variant="danger" size="sm" aria-label="Confirm delete" onClick={() => handleDeleteComment(comment.id)}><Trash /> Delete</Button>
+              <Button variant="secondary" size="sm" aria-label="Cancel delete" autoFocus onClick={startClosing}>Cancel</Button>
             </ButtonGroup>
           }
         </div>

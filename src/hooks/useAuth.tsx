@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext, createContext } from 'react'
 
 import { useAuthClient } from '../lib/clients'
 import { navigateTo } from '../lib/navigation'
+import { consumeOAuthFailure, oauthFailureMessage } from '../lib/oauthFailure'
 
 // ソーシャルログインは失敗しても画面が無反応になりやすいので、共通の文言で必ず知らせる
 export const SIGN_IN_ERROR_MESSAGE = "Sign in failed. Please try again."
@@ -48,6 +49,10 @@ const InternalAuth = (): IInternalAuth => {
   useEffect(() => {
     // handling auth
     console.log("useAuth Hook")
+    // ログインからの復帰に失敗して記事へ戻された場合。復帰ページには伝える場所が無いので
+    // ここで伝える。開発者ツールを開けない端末でも理由が分かるよう、画面に出す
+    const carried = consumeOAuthFailure()
+    if (carried) setSignInErrorMessage(oauthFailureMessage(carried))
     const off = authClient.onAuthEvent((event) => {
       setIsAuthResolved(true)
       switch (event.type) {

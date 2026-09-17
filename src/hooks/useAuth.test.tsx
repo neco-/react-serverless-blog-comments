@@ -4,6 +4,7 @@ import { useAuth, AuthContextProvider, SIGN_IN_ERROR_MESSAGE } from './useAuth'
 import { ClientsProvider } from '../lib/clients'
 import { FakeAuthClient, FakeApiClient } from '../test/fakes'
 import { navigateTo } from '../lib/navigation'
+import { reportOAuthFailure, oauthFailureMessage } from '../lib/oauthFailure'
 
 vi.mock('../lib/navigation', () => ({ navigateTo: vi.fn() }))
 
@@ -17,6 +18,7 @@ const setup = (authClient = new FakeAuthClient()) => {
 }
 
 beforeEach(() => {
+  sessionStorage.clear()
   vi.mocked(navigateTo).mockClear()
   vi.spyOn(console, 'log').mockImplementation(() => {})
   vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -62,6 +64,26 @@ describe('useAuth', () => {
     expect(navigateTo).not.toHaveBeenCalled()
     act(() => authClient.emit({ type: 'customOAuthState', state: '/posts/x' }))
     expect(navigateTo).toHaveBeenCalledWith('/posts/x')
+  })
+
+  it('復帰に失敗して戻ってきたときは、その理由を画面に出す', async () => {
+    reportOAuthFailure('exchange')
+    const { result } = setup()
+    await waitFor(() => expect(result.current.signInErrorMessage).toBe(oauthFailureMessage('exchange')))
+  })
+  it('持ち越された失敗は一度出したら消える（読み込み直しで出し続けない）', async () => {
+    reportOAuthFailure('no-flow')
+    const first = setup()
+    await waitFor(() => expect(first.result.current.signInErrorMessage).not.toBe(''))
+    first.unmount()
+    const second = setup()
+    await waitFor(() => expect(second.result.current.isError).toBe(true))
+    expect(second.result.current.signInErrorMessage).toBe('')
+  })
+  it('持ち越しが無ければ何も出さない', async () => {
+    const { result } = setup()
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.signInErrorMessage).toBe('')
   })
   it('signIn はクライアントに username と password を渡す', async () => {
     const { result, authClient } = setup()

@@ -8,8 +8,11 @@ import { ClientsProvider } from './lib/clients'
 import { createAmplifyAuthClient } from './lib/authClient'
 import { createAmplifyApiClient } from './lib/apiClient'
 import { startOAuthReturn } from './lib/oauthReturn'
+import { recoverPathFromState } from './lib/oauthState'
+import { isSignInInFlight } from './lib/oauthInFlight'
+import { reportOAuthFailure } from './lib/oauthFailure'
 import { selectRedirectUrls } from './lib/redirectUrls'
-import { navigateTo } from './lib/navigation'
+import { navigateTo, dismissOAuthReturnDialog } from './lib/navigation'
 
 import outputs from '../amplify_outputs.json'
 
@@ -33,8 +36,15 @@ const bc: HTMLElement | null = document.getElementById('blogcomments')
 
 // コメント欄が無いページで読み込まれるのは OAuth の戻り先のときだけ。
 // Amplify.configure でトークン交換が始まる前に購読しておく。
+// 進行中かどうかの印も Amplify が交換の途中で消すので、configure より前に読む。
 if (!bc) {
-  startOAuthReturn(createAmplifyAuthClient(), navigateTo)
+  const userPoolClientId = amplifyConfig.Auth?.Cognito.userPoolClientId ?? ''
+  startOAuthReturn(createAmplifyAuthClient(), navigateTo, {
+    isInFlight: () => isSignInInFlight(userPoolClientId),
+    recoverPath: () => recoverPathFromState(window.location.search),
+    reportFailure: reportOAuthFailure,
+    dismiss: dismissOAuthReturnDialog,
+  })
 }
 
 Amplify.configure(amplifyConfig)
