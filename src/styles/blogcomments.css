@@ -653,11 +653,11 @@
   position: absolute;
   inset: 0;
   display: flex;
-  animation: bc-confirm-grow 0.15s ease-out both;
+  animation: bc-confirm-grow 0.3s ease-out both;
 }
 /* 戻りも押した直後から動き出すよう、開くときと同じ ease-out にする。
  * ease-in だと最初の 1/3 がほとんど動かず、止まって見えてから消える */
-#blogcomments .bc-confirm-delete.bc-closing { animation: bc-confirm-shrink 0.15s ease-out both; }
+#blogcomments .bc-confirm-delete.bc-closing { animation: bc-confirm-shrink 0.3s ease-out both; }
 /* Delete と Cancel は同じ幅 */
 #blogcomments .bc-confirm-delete > .btn { flex: 1 1 0; white-space: nowrap; }
 @keyframes bc-confirm-grow {

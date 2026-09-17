@@ -23,7 +23,7 @@ import { useColorScheme } from "../../hooks/useColorScheme"
 import { CommentProps } from './CommentProps'
 
 // 確認の帯が伸び縮みする時間。CSS の bc-confirm-grow / bc-confirm-shrink と揃える
-export const CONFIRM_ANIMATION_MS = 150
+export const CONFIRM_ANIMATION_MS = 300
 
 export const Comment = memo(({comment, depth}:{comment: CommentProps, depth: number}) => {
   const { isAuthenticated, setIsOpenDialog, username } = useAuth()
